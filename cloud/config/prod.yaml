@@ -1,0 +1,12 @@
+aws_account: "637423239508"
+aws_region: us-east-1
+
+network:
+  vpc:
+    cidr: 10.1.0.0/16
+
+storage:
+  s3:
+    scripts_upload_bucket: jkpfactors-user-scripts
+    trainings_data_bucket: jkpfactors-training-data
+    ml_batch_jobs_bucket: jkpfactors-ml-batch-jobs

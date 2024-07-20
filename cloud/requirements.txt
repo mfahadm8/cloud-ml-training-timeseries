@@ -1,0 +1,6 @@
+-e .
+pytest
+flake8
+autopep8
+requests==2.26.0
+from-root
