@@ -64,8 +64,8 @@
       "ItemSelector": {
         "name.$": "$.name",
         "compute.$": "$.compute",
-        "user_ml_script_s3_uri.$": "States.Format('s3://{}/{}', $.input.s3_bucket, $$.Map.Item.Value.Key)",
-        "user_ml_output_csv_s3_uri.$": "States.Format('s3://{}/{}{}{}', $.output.s3_bucket, $.output.s3_prefix, $$.Map.Item.Value.Key, $.output.s3_suffix)",
+        "user_ml_script_s3_uri.$": "$.user_ml_script_s3_uri",
+        "user_ml_output_csv_s3_uri.$": "$.user_ml_output_csv_s3_uri",
         "model_name.$": "$.model_name",
         "user_name.$": "$.user_name",
         "email.$": "$.email"

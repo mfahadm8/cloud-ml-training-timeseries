@@ -1,5 +1,3 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-# SPDX-License-Identifier: Apache-2.0
 import os
 import time
 
@@ -98,48 +96,29 @@ class ApiStack(Stack):
                 properties={
                     "name": apig.JsonSchema(type=apig.JsonSchemaType.STRING),
                     "compute": apig.JsonSchema(type=apig.JsonSchemaType.STRING),
-                    "input": apig.JsonSchema(
-                        type=apig.JsonSchemaType.OBJECT,
-                        properties={
-                            "s3_bucket": apig.JsonSchema(type=apig.JsonSchemaType.STRING),
-                            "s3_prefix": apig.JsonSchema(type=apig.JsonSchemaType.STRING),
-                        },
-                    ),
-                    "output": apig.JsonSchema(
-                        type=apig.JsonSchemaType.OBJECT,
-                        properties={
-                            "s3_bucket": apig.JsonSchema(type=apig.JsonSchemaType.STRING),
-                            "s3_prefix": apig.JsonSchema(type=apig.JsonSchemaType.STRING),
-                            "s3_suffix": apig.JsonSchema(type=apig.JsonSchemaType.STRING),
-                        },
-                    ),
+                    "user_ml_output_csv_s3_uri": apig.JsonSchema(type=apig.JsonSchemaType.STRING),
+                    "user_ml_script_s3_uri": apig.JsonSchema(type=apig.JsonSchemaType.STRING),
                     "model_name": apig.JsonSchema(type=apig.JsonSchemaType.STRING),
                     "user_name": apig.JsonSchema(type=apig.JsonSchemaType.STRING),
                     "email": apig.JsonSchema(type=apig.JsonSchemaType.STRING),
                 },
-                required=["name", "compute", "input", "output", "model_name", "user_name", "email"],
+                required=[
+                    "name", "compute", "user_ml_output_csv_s3_uri",
+                    "user_ml_script_s3_uri", "model_name", "user_name", "email"
+                ],
             ),
         )
 
-        integration_request_mapping_template = """
+        integration_request_mapping_template = f"""
         {
             "input": {
                 "name": "$input.json('$.name')",
                 "compute": "$input.json('$.compute')",
-                "input": {
-                    "s3_bucket": "$input.json('$.input.s3_bucket')",
-                    "s3_prefix": "$input.json('$.input.s3_prefix')"
-                },
-                "output": {
-                    "s3_bucket": "$input.json('$.output.s3_bucket')",
-                    "s3_prefix": "$input.json('$.output.s3_prefix')",
-                    "s3_suffix": "$input.json('$.output.s3_suffix')"
-                },
+                "user_ml_output_csv_s3_uri": "$input.json('$.user_ml_output_csv_s3_uri')",
+                "user_ml_script_s3_uri": "$input.json('$.user_ml_script_s3_uri')",
                 "model_name": "$input.json('$.model_name')",
                 "user_name": "$input.json('$.user_name')",
-                "email": "$input.json('$.email')",
-                "user_ml_script_s3_uri": "States.Format('s3://{}/{}', $input.json('$.input.s3_bucket'), $$.Map.Item.Value.Key)",
-                "user_ml_output_csv_s3_uri": "States.Format('s3://{}/{}{}{}', $input.json('$.output.s3_bucket'), $input.json('$.output.s3_prefix'), $$.Map.Item.Value.Key, $input.json('$.output.s3_suffix'))"
+                "email": "$input.json('$.email')"
             },
             "stateMachineArn": "{sfn_state_machine.state_machine_arn}"
         }
