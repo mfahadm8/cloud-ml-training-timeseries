@@ -43,7 +43,7 @@ def load_data()->(str):
     return features, chars
     # raise NotImplementedError("This function should be replaced by the bash script.") # should return features, chars tuple, Also, Template should not allow nested funtions inside load_data()
 
-def export_data():
+def export_data(pf):
     """ Placeholder function for data exporting. """
     pf.to_parquet("data/portfolio.parquet")
     # raise NotImplementedError("This function should be replaced by the bash script.") # Template should not allow nested funtions inside export_data()
@@ -70,5 +70,5 @@ def main(chars, features, eom='eom'):
 if __name__ == "__main__":
     features, chars = load_data()
     pf = main(chars, features)
-    export_data()
+    export_data(pf)
     
