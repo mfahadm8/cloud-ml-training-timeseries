@@ -1,16 +1,40 @@
-FROM nvidia/cuda:11.0.3-base-ubuntu20.04
+FROM pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime
 
-WORKDIR /usr/src/app
+ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get update
-RUN apt-get install python3-pip -y
+# update NVIDIA repo key
+# https://developer.nvidia.com/blog/updating-the-cuda-linux-gpg-repository-key/
+ARG distro=ubuntu2004
+ARG arch=x86_64
+#gnupg
+RUN apt-get update && apt-get install -y gnupg 
+RUN apt-get update && apt-get install -y gnupg2 
+RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/$distro/$arch/3bf863cc.pub
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y libglib2.0-0 libsm6 libxrender-dev libxext6 libgl1-mesa-glx python3-dev python3 python3-pip git wget unzip && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN apt-get update && apt-get install -y python3-venv
+
+
+# Set up Python virtual environment
+RUN python3 -m venv /opt/venv
+# Activate the virtual environment
+ENV PATH="/opt/venv/bin:$PATH"
+# Install Python dependencies
+RUN python3 -m pip install --no-cache-dir --upgrade pip 
+WORKDIR /opt
+
 COPY . .
+RUN python3 -m pip install --no-cache-dir -r requirements.txt
 
 RUN pip3 install -r requirements.txt
 
-COPY training.py .
 RUN mkdir data
 
 HEALTHCHECK NONE
 
-CMD ["python3", "-u", "training.py"]
+CMD ["python3", "-u", "run.py"]
