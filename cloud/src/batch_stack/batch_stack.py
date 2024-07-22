@@ -183,6 +183,8 @@ class BatchJobStack(Stack):
             "Ref::user_name",
             "--email",
             "Ref::email",
+            "--submission_timestamp",
+            "Ref::submission_timestamp",
         ]
 
         mltraining_python_script_default_values = {
@@ -191,6 +193,7 @@ class BatchJobStack(Stack):
             "model_name": "null",
             "user_name": "null",
             "email": "null",
+            "submission_timestamp": "null",
         }
 
 

@@ -22,7 +22,9 @@
             "--user_name",
             "$.user_name",
             "--email",
-            "$.email"
+            "$.email",
+            "--submission_timestamp",
+            "$.submission_timestamp"
           ]
         }
       },
