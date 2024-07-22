@@ -29,8 +29,10 @@ def calculate_sharpe_ratio(output_file):
         # calculate sharpe
         sharpe = average_ret/volatility
 
-    
         return True, f"Sharpe Ratio: {sharpe}"
+
+    except Exception as e:
+        return False, str(e)
     
 # Example usage
 output_file = "data/portfolio.parquet"

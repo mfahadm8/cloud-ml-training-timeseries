@@ -172,7 +172,7 @@ class BatchJobStack(Stack):
 
         mltraining_python_script_command = [
             "python",
-            "script.py",
+            "run.py",
             "--user_ml_script_s3_uri",
             "Ref::user_ml_script_s3_uri",
             "--user_ml_output_csv_s3_uri",
@@ -203,7 +203,7 @@ class BatchJobStack(Stack):
         job_definition_container_env = job_definition_container_env_base.copy()
         lustre_volumes = None
 
-        nvidia_tag = "6.0-nvidia2004-amd64"
+        nvidia_tag = "latest"
         batch_jobdef_nvidia_container = batch.EcsEc2ContainerDefinition(
             self,
             "container-def-nvidia",

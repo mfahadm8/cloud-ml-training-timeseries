@@ -2,9 +2,9 @@ import boto3
 import subprocess  # nosec B404
 import os
 import sys
-from .integrity_checks.evalution_criteria import calculate_sharpe_ratio
-from .integrity_checks.runtime_checks import run_script_in_docker
-from .integrity_checks.static_checks import perform_static_checks
+from .evalution_criteria import calculate_sharpe_ratio
+from .runtime_checks import run_script_in_docker
+from .static_checks import perform_static_checks
 
 def download_from_s3(s3_uri, local_path):
     s3 = boto3.client('s3')
