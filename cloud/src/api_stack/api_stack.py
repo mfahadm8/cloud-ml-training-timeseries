@@ -8,6 +8,7 @@ from constructs import Construct
 from typing import Dict, List
 import time
 
+from .crud_lambda import CrudLambda
 class ApiStack(Stack):
     """API Gateway of the solution."""
     def __init__(
@@ -46,8 +47,9 @@ class ApiStack(Stack):
             ),
         )
 
-        api_resource_sfn = api.root.add_resource("state")
-        self._api_sfn_execute(api, api_resource_sfn, api_role, sfn_state_machine)
+        
+        self._api_sfn_execute(api, api_role, sfn_state_machine)
+        self._api_crud(api,config)
 
         cdk.CfnOutput(
             self,
@@ -67,10 +69,10 @@ class ApiStack(Stack):
     def _api_sfn_execute(
         self,
         api: apig.RestApi,
-        api_resource: apig.IResource,
         api_role: iam.IRole,
         sfn_state_machine: sfn.IStateMachine,
     ):
+        api_resource = api.root.add_resource("state")
         api_role.add_to_policy(
             iam.PolicyStatement(
                 actions=["states:StartExecution"],
@@ -160,4 +162,29 @@ class ApiStack(Stack):
                 validate_request_body=True,
                 validate_request_parameters=True,
             ),
+        )
+
+
+    def _api_crud(self, api: apig.RestApi,config):
+        crud_lambda = CrudLambda(self, "MlCrudLambda", config)
+        # Add Lambda Integration
+        integration_crud = apig.LambdaIntegration(
+            crud_lambda,
+            integration_responses=[
+                {
+                    "statusCode": "200",
+                }
+            ],
+        )
+
+        resource_crud_base = api.root.add_resource("crud")
+        resource_crud_proxy = resource_crud_base.add_resource("{proxy+}")
+        crud_method = resource_crud_proxy.add_method(
+            "ANY",
+            integration_crud,
+            method_responses=[
+                {
+                    "statusCode": "200",
+                }
+            ],
         )

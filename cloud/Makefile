@@ -2,7 +2,7 @@ LOCAL_VENV_NAME=.venv
 PYTHON=python
 STACK?=network-stack
 
-STAGE?= dev
+STAGE?= prod
 AWS_ACCOUNT_ID=998293780211
 ifeq ($(STAGE), prod)
 	AWS_REGION=eu-west-2
