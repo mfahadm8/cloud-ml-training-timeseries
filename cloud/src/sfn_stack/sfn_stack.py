@@ -12,7 +12,6 @@ from from_root import from_here
 
 from typing import Dict
 
-
 class SfnStack(Stack):
     """AWS Step Function executes AWS Batch ML Trainings jobs for a list of S3
     objects."""

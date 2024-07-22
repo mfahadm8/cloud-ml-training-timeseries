@@ -7,8 +7,8 @@
       "Resource": "arn:aws:states:::batch:submitJob.sync",
       "Parameters": {
         "JobName.$": "$.name",
-        "JobDefinition.$": "States.Format('arn:aws:batch:{}:{}:job-definition/{}', '{{REGION}}', '{{ACCOUNT}}', '{{JOB_DEFINITION}}')",
-        "JobQueue.$": "States.Format('arn:aws:batch:{}:{}:job-queue/{}', '{{REGION}}', '{{ACCOUNT}}', '{{JOB_QUEUE}}')",
+        "JobDefinition": "arn:aws:batch:${REGION}:${ACCOUNT}:job-definition/${JOB_DEFINITION}",
+        "JobQueue": "arn:aws:batch:${REGION}:${ACCOUNT}:job-queue/${JOB_QUEUE}",
         "ContainerOverrides": {
           "Command": [
             "python",
