@@ -3,8 +3,8 @@ import os
 
 
 TEMPLATE_FUNCTIONS = {
-    'load_data': 'template/load_func.py',
-    'export_data': 'template/export_func.py',
+    'load_data': '/home/ec2-user/cloud-ml-training-timeseries/application/templates/load_func.py',
+    'export_data': '/home/ec2-user/cloud-ml-training-timeseries/application/templates/export_func.py',
 }
 
 def read_template_function(template_path):

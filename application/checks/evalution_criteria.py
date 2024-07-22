@@ -34,7 +34,3 @@ def calculate_sharpe_ratio(output_file):
     except Exception as e:
         return False, str(e)
     
-# Example usage
-output_file = "data/portfolio.parquet"
-is_valid, message = calculate_sharpe_ratio(output_file)
-print(message)

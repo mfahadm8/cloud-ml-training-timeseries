@@ -1,0 +1,23 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        
+        {
+            "name": "Python Debugger: ML File",
+            "type": "debugpy",
+            "request": "launch",
+            "python": "${workspaceFolder}/application/.venv/bin/python3",
+            "program": "${file}",
+            "console": "integratedTerminal",
+            "args": [
+                "--user_ml_script_s3_uri",
+                "s3://jkpfactors-user-scripts/unprocessed/submissions/mfahadm8@gmail.com/1721685665/train.py",
+                "--user_ml_output_csv_s3_uri",
+                "s3://jkpfactors-user-scripts/unprocessed/submissions/mfahadm8@gmail.com/1721685665/results.parquet"
+            ],
+        }
+    ]
+}

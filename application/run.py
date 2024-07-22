@@ -3,7 +3,7 @@ import subprocess  # nosec B404
 import os
 import sys
 from checks.evalution_criteria import calculate_sharpe_ratio
-from checks.runtime_checks import run_script_in_docker
+from checks.runtime_checks import run_script
 from checks.static_checks import perform_static_checks
 from utils.replace_func import update_script_with_template_functions
 
@@ -42,8 +42,11 @@ def perform_integrity_check(script_file, output_file):
     if not is_valid:
         return False, message
     
+    # replace data loading and export function in the script file
+    update_script_with_template_functions(script_file)
+
     # Step 2: Runtime Checks
-    is_valid, message = run_script_in_docker()
+    is_valid, message = run_script(script_file)
     if not is_valid:
         return False, message
     
@@ -56,16 +59,15 @@ def perform_integrity_check(script_file, output_file):
 
 def main(user_ml_script_s3_uri, user_ml_output_csv_s3_uri):
     # Define local paths
-    script_file = "submitted_script.py"
-    output_file = "output.csv"
+    script_file = user_ml_script_s3_uri.split("/")[-1]
+    output_file = user_ml_output_csv_s3_uri.split("/")[-1]
     
     # Download the files from S3
     download_from_s3(user_ml_script_s3_uri, script_file)
     download_from_s3(user_ml_output_csv_s3_uri, output_file)
     download_from_s3(INTEGRITY_CHECK_DATA_S3_URI,INTEGRITY_CHECK_DATA_LOCAL_PATH)
 
-    # replace data loading and export function in the script file
-    update_script_with_template_functions(script_file)
+
     
     # Run integrity checks
     is_valid, message = perform_integrity_check(script_file, output_file)
@@ -83,8 +85,8 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Run integrity checks and execute user ML script.')
-    parser.add_argument('user_ml_script_s3_uri', type=str, help='The S3 URI of the user ML script.')
-    parser.add_argument('user_ml_output_csv_s3_uri', type=str, help='The S3 URI of the user ML output CSV.')
+    parser.add_argument('--user_ml_script_s3_uri', type=str, help='The S3 URI of the user ML script.')
+    parser.add_argument('--user_ml_output_csv_s3_uri', type=str, help='The S3 URI of the user ML output CSV.')
 
     args = parser.parse_args()
     main(args.user_ml_script_s3_uri, args.user_ml_output_csv_s3_uri)

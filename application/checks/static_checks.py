@@ -1,7 +1,7 @@
 import ast
 import os
 
-required_functions = ["ecdf", "prepare_data", "fit_xgb", "load_data", "export_data", "main"]
+required_functions = ["ecdf", "prepare_data", "fit_model", "load_data", "export_data", "main"]
 
 def check_syntax(file_path):
     try:
@@ -16,14 +16,14 @@ def check_required_functions(tree):
     missing_functions = [func for func in required_functions if func not in functions]
     return missing_functions
 
-def check_no_nested_functions(tree):
-    for node in ast.walk(tree):
-        if isinstance(node, ast.FunctionDef):
-            for inner_node in ast.walk(node):
-                if isinstance(inner_node, ast.FunctionDef):
-                    if inner_node != node:
-                        return False, f"Nested function {inner_node.name} found in {node.name}"
-    return True, ""
+# def check_no_nested_functions(tree):
+#     for node in ast.walk(tree):
+#         if isinstance(node, ast.FunctionDef):
+#             for inner_node in ast.walk(node):
+#                 if isinstance(inner_node, ast.FunctionDef):
+#                     if inner_node != node:
+#                         return False, f"Nested function {inner_node.name} found in {node.name}"
+#     return True, ""
 
 def perform_static_checks(file_path):
     syntax_ok, result = check_syntax(file_path)
@@ -35,13 +35,8 @@ def perform_static_checks(file_path):
     if missing_functions:
         return False, f"Missing required functions: {', '.join(missing_functions)}"
     
-    nested_ok, nested_result = check_no_nested_functions(tree)
-    if not nested_ok:
-        return False, nested_result
+    # nested_ok, nested_result = check_no_nested_functions(tree)
+    # if not nested_ok:
+    #     return False, nested_result
     
     return True, "Static checks passed"
-
-# Example usage
-file_path = "submitted_script.py"
-is_valid, message = perform_static_checks(file_path)
-print(message)
