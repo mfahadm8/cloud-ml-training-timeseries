@@ -1,5 +1,3 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-# SPDX-License-Identifier: Apache-2.0
 import copy
 import os
 
@@ -35,14 +33,14 @@ class BatchJobStack(Stack):
     ml_jobs = []
     _xilinx_regions = ["us-west-2", "us-east-1", "eu-west-1"]
     _account = None
-    _region = None 
+    _region = None
 
     def __init__(
         self,
         scope: Construct,
         construct_id: str,
         vpc: ec2.Vpc,
-        config:Dict,
+        config: Dict,
         ecr_registry: ecr.Repository,
         scripts_s3_bucket: s3.IBucket,
         training_data_s3_bucket: s3.IBucket,
@@ -51,8 +49,8 @@ class BatchJobStack(Stack):
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        self._account=config["aws_account"]
-        self._region=config["aws_region"]
+        self._account = config["aws_account"]
+        self._region = config["aws_region"]
 
         subnet_selection = ec2.SubnetSelection(
             subnet_type=ec2.SubnetType.PRIVATE_ISOLATED
@@ -91,7 +89,7 @@ class BatchJobStack(Stack):
         scripts_s3_bucket.grant_read_write(batch_instance_role)
         ml_batch_jobs_bucket.grant_read_write(batch_instance_role)
 
-        lustre_fs = None 
+        lustre_fs = None
 
         batch_job_role = iam.Role(
             self,
@@ -172,29 +170,29 @@ class BatchJobStack(Stack):
                 *instances_classes_not_available,
             ]
 
-
         mltraining_python_script_command = [
-            "--global_options",
-            "Ref::global_options",
-            "--input_file_options",
-            "Ref::input_file_options",
-            "--input_url",
-            "Ref::input_url",
-            "--output_file_options",
-            "Ref::output_file_options",
-            "--output_url",
-            "Ref::output_url",
-            "--name",
-            "Ref::name",
+            "python",
+            "script.py",
+            "--user_ml_script_s3_uri",
+            "Ref::user_ml_script_s3_uri",
+            "--user_ml_output_csv_s3_uri",
+            "Ref::user_ml_output_csv_s3_uri",
+            "--model_name",
+            "Ref::model_name",
+            "--user_name",
+            "Ref::user_name",
+            "--email",
+            "Ref::email",
         ]
+
         mltraining_python_script_default_values = {
-            "global_options": "null",
-            "input_file_options": "null",
-            "input_url": "null",
-            "output_file_options": "null",
-            "output_url": "null",
-            "name": "null",
+            "user_ml_script_s3_uri": "null",
+            "user_ml_output_csv_s3_uri": "null",
+            "model_name": "null",
+            "user_name": "null",
+            "email": "null",
         }
+
 
         # AWS Batch : Job Definition > Container
         job_definition_container_env_base = {
@@ -215,7 +213,7 @@ class BatchJobStack(Stack):
             execution_role=batch_execution_role,
             job_role=batch_job_role,
             gpu=1,
-            cpu=2,
+            cpu=4,  # Updated to minimum 4 vCPUs
             memory=cdk.Size.mebibytes(8192),
             volumes=lustre_volumes,
         )

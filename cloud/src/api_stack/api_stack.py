@@ -1,6 +1,3 @@
-import os
-import time
-
 import aws_cdk as cdk
 from aws_cdk import Stack
 from aws_cdk import aws_apigateway as apig
@@ -8,12 +5,8 @@ from aws_cdk import aws_iam as iam
 from aws_cdk import aws_logs as cwlogs
 from aws_cdk import aws_stepfunctions as sfn
 from constructs import Construct
-
-from ..batch_stack.ml_batch_job import MlTrainingBatchJob
 from typing import Dict, List
-
-MlBatchJobs = List[MlTrainingBatchJob]
-
+import time
 
 class ApiStack(Stack):
     """API Gateway of the solution."""
@@ -22,7 +15,7 @@ class ApiStack(Stack):
         scope: Construct,
         construct_id: str,
         config: Dict,
-        ml_jobs: MlBatchJobs,
+        ml_jobs: List,
         sfn_state_machine: sfn.IStateMachine,
         **kwargs,
     ) -> None:
@@ -55,7 +48,6 @@ class ApiStack(Stack):
 
         api_resource_sfn = api.root.add_resource("state")
         self._api_sfn_execute(api, api_resource_sfn, api_role, sfn_state_machine)
-        # self._api_sfn_describe(api, api_resource_sfn, api_role, sfn_state_machine)
 
         cdk.CfnOutput(
             self,
@@ -86,6 +78,8 @@ class ApiStack(Stack):
             )
         )
 
+        api_role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name("AWSStepFunctionsFullAccess"))
+
         request_model = api.add_model(
             "sfn-request-model",
             content_type="application/json",
@@ -109,27 +103,19 @@ class ApiStack(Stack):
             ),
         )
 
+        time.strftime("%Y%m%d-%H%M%S")
         integration_request_mapping_template = f"""
-        {
-            "input": {
-                "name": "$input.json('$.name')",
-                "compute": "$input.json('$.compute')",
-                "user_ml_output_csv_s3_uri": "$input.json('$.user_ml_output_csv_s3_uri')",
-                "user_ml_script_s3_uri": "$input.json('$.user_ml_script_s3_uri')",
-                "model_name": "$input.json('$.model_name')",
-                "user_name": "$input.json('$.user_name')",
-                "email": "$input.json('$.email')"
-            },
-            "stateMachineArn": "{sfn_state_machine.state_machine_arn}"
-        }
-        """
-
+            #set($data = $util.escapeJavaScript($input.json('$')))
+            {{
+                "input": "$data",
+                "stateMachineArn": "{sfn_state_machine.state_machine_arn}"
+              }}
+          """
         integration_response_mapping_template = """
-        {
-            "executionArn": $input.json('$.executionArn')
-        }
-        """
-
+          {
+              "executionArn":$input.json('$.executionArn')
+          }
+          """
         integration_response = apig.IntegrationResponse(
             status_code="200",
             response_templates={
@@ -149,23 +135,27 @@ class ApiStack(Stack):
             },
         )
 
+        # https://docs.aws.amazon.com/fr_fr/step-functions/latest/dg/tutorial-api-gateway.html
         api_integration = apig.AwsIntegration(
             service="states",
-            integration_http_method="POST",
-            path="StartExecution",
+            action="StartExecution",
             options=api_integration_options,
         )
-
+        # Step Function API
+        method_response = apig.MethodResponse(
+            status_code="200",
+        )
         api_resource_execute = api_resource.add_resource("execute")
         api_resource_execute.add_method(
             "POST",
             integration=api_integration,
-            method_responses=[apig.MethodResponse(status_code="200")],
-            api_key_required=True,
+            method_responses=[method_response],
+            authorization_type=apig.AuthorizationType.IAM,
             request_models={"application/json": request_model},
+            request_parameters=None,
             request_validator=apig.RequestValidator(
                 self,
-                "sfn-body-validator",
+                "sfn-execution-body-validator",
                 rest_api=api,
                 validate_request_body=True,
                 validate_request_parameters=True,

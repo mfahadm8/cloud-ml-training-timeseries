@@ -1,5 +1,3 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-# SPDX-License-Identifier: Apache-2.0
 import os
 import random
 import string
@@ -22,17 +20,17 @@ class SfnStack(Stack):
     sfn_state_machine = None   
 
     def __init__(
-        self, scope: Construct, construct_id: str, config:Dict,s3_bucket: s3.IBucket,job_definition_name:str,job_queue_name:str,**kwargs
+        self, scope: Construct, construct_id: str, config: Dict, s3_bucket: s3.IBucket, job_definition_name: str, job_queue_name: str, **kwargs
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        account=config["aws_account"]
-        region=config["aws_region"]
+        account = config["aws_account"]
+        region = config["aws_region"]
 
         # IAM
         iam_role_state = iam.Role(
             self,
-            "state-role-"+config["stage"],
+            "state-role-" + config["stage"],
             description="AWS Batch ML Trainings : IAM Role used by AWS Step Functions ",
             assumed_by=iam.ServicePrincipal("states.amazonaws.com"),
             managed_policies=[
@@ -68,7 +66,7 @@ class SfnStack(Stack):
                         iam.PolicyStatement(
                             actions=["states:StartExecution"],
                             resources=[
-                                f"arn:aws:states:{region}:{account}:stateMachine:batch-mltraining-state-machine-"+config["stage"]
+                                f"arn:aws:states:{region}:{account}:stateMachine:batch-mltraining-state-machine-" + config["stage"]
                             ],
                         ),
                         iam.PolicyStatement(
@@ -101,7 +99,7 @@ class SfnStack(Stack):
         log_group = logs.LogGroup(
             self,
             "sfn-logs",
-            log_group_name=f"/aws/vendedlogs/states/batch-mltraining-{uid}-"+config["stage"],
+            log_group_name=f"/aws/vendedlogs/states/batch-mltraining-{uid}-" + config["stage"],
         )
 
         # State Machine
@@ -114,9 +112,15 @@ class SfnStack(Stack):
             logs=stepfunctions.LogOptions(
                 destination=log_group, level=stepfunctions.LogLevel.ALL
             ),
-            state_machine_name="batch-mltraining-state-machine-"+config["stage"],
+            state_machine_name="batch-mltraining-state-machine-" + config["stage"],
             definition_body=stepfunctions.DefinitionBody.from_file(
-                from_here("assets","main_state.asl.json").as_posix()
+                from_here("assets", "main_state.asl.json").as_posix()
             ),
-            definition_substitutions={"REGION": region, "ACCOUNT": account,"STAGE":config["stage"],"JOB_QUEUE":job_queue_name,"JOB_DEFINITION":job_definition_name},
+            definition_substitutions={
+                "REGION": region,
+                "ACCOUNT": account,
+                "STAGE": config["stage"],
+                "JOB_QUEUE": job_queue_name,
+                "JOB_DEFINITION": job_definition_name
+            },
         )

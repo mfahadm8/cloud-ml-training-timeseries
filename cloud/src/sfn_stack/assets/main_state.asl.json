@@ -1,84 +1,43 @@
 {
   "Comment": "AWS Batch with mltraining : Main state machine",
-  "StartAt": "S3 object keys",
+  "StartAt": "SubmitJob",
   "States": {
-    "S3 object keys": {
-      "Type": "Map",
-      "ItemProcessor": {
-        "ProcessorConfig": {
-          "Mode": "DISTRIBUTED",
-          "ExecutionType": "STANDARD"
-        },
-        "StartAt": "SubmitJob",
-        "States": {
-          "SubmitJob": {
-            "Type": "Task",
-            "Resource": "arn:aws:states:::batch:submitJob.sync",
-            "Parameters": {
-              "JobName.$": "$.name",
-              "JobDefinition.$": "States.Format('arn:aws:batch:${REGION}:${ACCOUNT}:job-definition/${JOB_DEFINITION}', $.compute)",
-              "JobQueue.$": "States.Format('arn:aws:batch:${REGION}:${ACCOUNT}:job-queue/${JOB_QUEUE}', $.compute)",
-              "ContainerOverrides": {
-                "Command": [
-                  "python",
-                  "script.py",
-                  "--user_ml_script_s3_uri",
-                  "$.user_ml_script_s3_uri",
-                  "--user_ml_output_csv_s3_uri",
-                  "$.user_ml_output_csv_s3_uri",
-                  "--model_name",
-                  "$.model_name",
-                  "--user_name",
-                  "$.user_name",
-                  "--email",
-                  "$.email"
-                ]
-              }
-            },
-            "End": true,
-            "Retry": [
-              {
-                "ErrorEquals": ["States.ALL"],
-                "BackoffRate": 3,
-                "IntervalSeconds": 180,
-                "MaxAttempts": 10,
-                "Comment": "retry because of AWS Batch Quotas Issue",
-                "MaxDelaySeconds": 300,
-                "JitterStrategy": "FULL"
-              }
-            ]
-          }
+    "SubmitJob": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::batch:submitJob.sync",
+      "Parameters": {
+        "JobName.$": "$.name",
+        "JobDefinition.$": "States.Format('arn:aws:batch:{}:{}:job-definition/{}', '{{REGION}}', '{{ACCOUNT}}', '{{JOB_DEFINITION}}')",
+        "JobQueue.$": "States.Format('arn:aws:batch:{}:{}:job-queue/{}', '{{REGION}}', '{{ACCOUNT}}', '{{JOB_QUEUE}}')",
+        "ContainerOverrides": {
+          "Command": [
+            "python",
+            "script.py",
+            "--user_ml_script_s3_uri",
+            "$.user_ml_script_s3_uri",
+            "--user_ml_output_csv_s3_uri",
+            "$.user_ml_output_csv_s3_uri",
+            "--model_name",
+            "$.model_name",
+            "--user_name",
+            "$.user_name",
+            "--email",
+            "$.email"
+          ]
         }
       },
       "End": true,
-      "Label": "S3objectkeys",
-      "ItemReader": {
-        "Resource": "arn:aws:states:::s3:listObjectsV2",
-        "Parameters": {
-          "Bucket.$": "$.input.s3_bucket",
-          "Prefix.$": "$.input.s3_prefix"
+      "Retry": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "BackoffRate": 3,
+          "IntervalSeconds": 180,
+          "MaxAttempts": 10,
+          "Comment": "retry because of AWS Batch Quotas Issue",
+          "MaxDelaySeconds": 300,
+          "JitterStrategy": "FULL"
         }
-      },
-      "Comment": "Ingest all objects from Amazon S3",
-      "InputPath": "$",
-      "ItemSelector": {
-        "name.$": "$.name",
-        "compute.$": "$.compute",
-        "user_ml_script_s3_uri.$": "$.user_ml_script_s3_uri",
-        "user_ml_output_csv_s3_uri.$": "$.user_ml_output_csv_s3_uri",
-        "model_name.$": "$.model_name",
-        "user_name.$": "$.user_name",
-        "email.$": "$.email"
-      },
-      "ResultPath": "$",
-      "MaxConcurrency": 500,
-      "ResultWriter": {
-        "Resource": "arn:aws:states:::s3:putObject",
-        "Parameters": {
-          "Bucket.$": "$.input.s3_bucket",
-          "Prefix": "batch-mltraining-state-machine/results-output/"
-        }
-      }
+      ]
     }
   }
 }

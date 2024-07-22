@@ -1,5 +1,3 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-# SPDX-License-Identifier: Apache-2.0,
 from aws_cdk import Duration
 from aws_cdk import aws_batch as batch
 from aws_cdk import aws_ec2 as ec2
@@ -21,7 +19,7 @@ class MlTrainingBatchJob(Construct):
         self,
         scope: Construct,
         construct_id: str,
-        config:Dict,
+        config: Dict,
         proc_name: str,
         batch_jobdef_container,
         batch_jobdef_parameters,
@@ -40,12 +38,12 @@ class MlTrainingBatchJob(Construct):
         fargate_disabled = batch_compute_instance_classes or ec2_ami
 
         self.proc_name = proc_name
-        self.job_queue_name = "batch-mltraining-job-queue-" + proc_name +config["stage"]
-        self.job_definition_name = "batch-mltraining-job-definition-" + proc_name + "-"+config["stage"]
+        self.job_queue_name = "batch-mltraining-job-queue-" + proc_name + config["stage"]
+        self.job_definition_name = "batch-mltraining-job-definition-" + proc_name + "-" + config["stage"]
 
         batch_job_definition = batch.EcsJobDefinition(
             self,
-            id="job-definition-"+config["stage"],
+            id="job-definition-" + config["stage"],
             job_definition_name=self.job_definition_name,
             container=batch_jobdef_container,
             parameters=batch_jobdef_parameters,
@@ -103,12 +101,12 @@ class MlTrainingBatchJob(Construct):
             launch_template = ec2.LaunchTemplate(
                 self,
                 "lt-" + proc_name + "-" + short_hash,
-                launch_template_name="batch-mltraining-lt-" + proc_name + "-" + short_hash +"-"+config["stage"],
+                launch_template_name="batch-mltraining-lt-" + proc_name + "-" + short_hash + "-" + config["stage"],
                 user_data=multipart_user_data,
             )
             compute_environment = batch.ManagedEc2EcsComputeEnvironment(
                 self,
-                "batch-ec2-compute-environment-" + proc_name+"-"+config["stage"],
+                "batch-ec2-compute-environment-" + proc_name + "-" + config["stage"],
                 vpc=ec2_vpc,
                 images=[{"image": ec2_ami}],
                 instance_classes=batch_compute_instance_classes,
@@ -128,7 +126,7 @@ class MlTrainingBatchJob(Construct):
         else:
             compute_environment = batch.FargateComputeEnvironment(
                 self,
-                "batch-fargate-compute-environment-" + proc_name+"-"+config["stage"],
+                "batch-fargate-compute-environment-" + proc_name + "-" + config["stage"],
                 vpc=ec2_vpc,
                 security_groups=[ec2_vpc_sg],
                 vpc_subnets=ec2_vpc_subnets,
