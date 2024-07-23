@@ -10,3 +10,6 @@ storage:
     scripts_upload_bucket: jkpfactors-user-scripts
     trainings_data_bucket: jkpfactors-training-data
     ml_batch_jobs_bucket: jkpfactors-ml-batch-jobs
+  db:
+    benchmarks_table: benchmarks
+    submissions_table: submissions

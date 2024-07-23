@@ -169,7 +169,7 @@ class ApiStack(Stack):
         crud_lambda = CrudLambda(self, "MlCrudLambda", config)
         # Add Lambda Integration
         integration_crud = apig.LambdaIntegration(
-            crud_lambda,
+            crud_lambda.crud_lambda,
             integration_responses=[
                 {
                     "statusCode": "200",

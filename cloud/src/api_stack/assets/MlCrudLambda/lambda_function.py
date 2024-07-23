@@ -14,7 +14,7 @@ from jsonschema import validate
 
 # Environment variables
 BENCHMARKS_TABLE_NAME = os.environ.get("BENCHMARKS_TABLE", "benchmarks")
-USER_SCRIPTS_BUCKET_NAME = os.environ.get("aquacontrol_blob_bucket", "jkpfactors-user-scripts")
+USER_SCRIPTS_BUCKET_NAME = os.environ.get("USER_SCRIPTS_BUCKET_NAME", "jkpfactors-user-scripts")
 SUBMISSIONS_TABLE_NAME = os.environ.get("SUBMISSIONS_TABLE", "submissions")
 
 # Initialize DynamoDB

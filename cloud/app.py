@@ -76,21 +76,21 @@ api_stack = ApiStack(
     description="AWS Batch ML Training : API Gateway",
 )
 
-application = appreg.ApplicationAssociator(
-    app,
-    "batch-mltraining-app-"+config["stage"],
-    applications=[
-        appreg.TargetApplication.create_application_stack(
-            application_name="batch-mltraining",
-            description="AWS Batch ML Training : Application",
-            stack_name="batch-mltraining-application",
-            env=env,
-        )
-    ],
-)
-application.node.add_dependency(network_stack)
-application.node.add_dependency(storage_stack)
-application.node.add_dependency(api_stack)
-application.node.add_dependency(batch_stack)
+# application = appreg.ApplicationAssociator(
+#     app,
+#     "batch-mltraining-app-"+config["stage"],
+#     applications=[
+#         appreg.TargetApplication.create_application_stack(
+#             application_name="batch-mltraining",
+#             description="AWS Batch ML Training : Application",
+#             stack_name="batch-mltraining-application",
+#             env=env,
+#         )
+#     ],
+# )
+# application.node.add_dependency(network_stack)
+# application.node.add_dependency(storage_stack)
+# application.node.add_dependency(api_stack)
+# application.node.add_dependency(batch_stack)
 
 app.synth()
