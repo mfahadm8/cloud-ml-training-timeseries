@@ -2,11 +2,6 @@ import ast
 import os
 
 
-TEMPLATE_FUNCTIONS = {
-    'load_data': '/home/ec2-user/cloud-ml-training-timeseries/application/templates/load_func.py',
-    'export_data': '/home/ec2-user/cloud-ml-training-timeseries/application/templates/export_func.py',
-}
-
 def read_template_function(template_path):
     with open(template_path, 'r') as file:
         return file.read()
@@ -23,11 +18,11 @@ def replace_function_in_ast(tree, function_name, new_function_code):
     transformer = FunctionTransformer()
     return transformer.visit(tree)
 
-def update_script_with_template_functions(script_path):
+def update_script_with_template_functions(script_path,template_functions_mapping):
     with open(script_path, 'r') as file:
         tree = ast.parse(file.read())
     
-    for function_name, template_path in TEMPLATE_FUNCTIONS.items():
+    for function_name, template_path in template_functions_mapping.items():
         new_function_code = read_template_function(template_path)
         tree = replace_function_in_ast(tree, function_name, new_function_code)
     

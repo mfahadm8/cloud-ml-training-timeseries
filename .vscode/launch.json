@@ -9,7 +9,7 @@
             "name": "Python Debugger: ML File",
             "type": "debugpy",
             "request": "launch",
-            "python": "${workspaceFolder}/application/.venv/bin/python3",
+            "python": "${workspaceFolder}/.venv/bin/python3",
             "program": "${file}",
             "console": "integratedTerminal",
             "args": [
