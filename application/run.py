@@ -7,6 +7,7 @@ from utils.runtime_checks import run_script
 from utils.static_checks import perform_static_checks
 from utils.replace_func import update_script_with_template_functions
 import pandas as pd
+from utils.boto3_helper import store_sharpe_ratio_in_dynamodb,send_failure_email,upload_script_to_s3
 
 USER_SCRIPTS_BUCKET_NAME = os.environ.get("USER_SCRIPTS_BUCKET_NAME", "jkpfactors-user-scripts")
 INTEGRITY_CHECK_DATA_S3_URI = "s3://jkpfactors-training-data/integrity-check/"
@@ -84,9 +85,9 @@ def main(user_ml_script_s3_uri, user_ml_output_csv_s3_uri,submission_timestamp,e
     print(message)
     
     if is_valid:
-        # todo:  store the file in s3 under key "unprocessed/accepted/email/submision_timestamp/script_file"
+        upload_script_to_s3(script_file,output_file,USER_SCRIPTS_BUCKET_NAME,email,submission_timestamp)
     else:
-        # todo: send ses email to user on email with the message
+        send_failure_email(email=email,message=message)
         
         
     if is_valid and SHOULD_PERFORM_COMPLETE_TRAINING:
@@ -116,7 +117,8 @@ def main(user_ml_script_s3_uri, user_ml_output_csv_s3_uri,submission_timestamp,e
         if not is_valid:
             return False, message
         
-        # todo: Store the sharp ratio and args.submission_timestamp,args.email,args.user_name,args.model_name in benchmarks dynamodb table
+        store_sharpe_ratio_in_dynamodb(sharpe_ratio=message,submission_timestamp=submission_timestamp,email=email,user_name=user_name,model_name=model_name)
+        
     else:
         print("Integrity checks failed. Exiting.")
 
