@@ -1,18 +1,19 @@
 import pandas as pd
 
-def calculate_sharpe_ratio(output_file):
+def check_required_columns(output_file="data/training_results.csv"):
+    df = pd.read_csv(output_file)
+    required_columns = ["id", "eom", "w"]
+    if not all(col in df.columns for col in required_columns):
+        return False, "Output does not contain required columns (id, eom, w)"
+    else:
+        return True, "Required Columns Check Passed!"
+
+def calculate_sharpe_ratio():
     try:
-        df = pd.read_parquet(output_file)
-        required_columns = ["id", "eom", "w"]
-        if not all(col in df.columns for col in required_columns):
-            return False, "Output does not contain required columns (id, eom, w)"
-        
-        # Implement Sharpe Ratio calculation here
-        # Placeholder logic:
-        sharpe_ratio = (df["w"].mean() / df["w"].std()) * (252**0.5)
-
         #calculating sharpe:
-
+        chars = pd.read_parquet("data/ctff_chars.parquet")
+        pf= pd.read_csv("data/training_results.csv")
+        
         #getting rets attached to weights
         sharpe_df = pd.merge(pf, chars[['id', 'eom', 'ret_exc_lead1m']], on=['id', 'eom'], how='left')
 
@@ -29,7 +30,7 @@ def calculate_sharpe_ratio(output_file):
         # calculate sharpe
         sharpe = average_ret/volatility
 
-        return True, f"Sharpe Ratio: {sharpe}"
+        return True, sharpe
 
     except Exception as e:
         return False, str(e)

@@ -9,14 +9,14 @@
             "name": "Python Debugger: ML File",
             "type": "debugpy",
             "request": "launch",
-            "python": "${workspaceFolder}/.venv/bin/python3",
+            "python": "${workspaceFolder}/../.venv/bin/python3",
             "program": "${file}",
             "console": "integratedTerminal",
             "args": [
                 "--user_ml_script_s3_uri",
                 "s3://jkpfactors-user-scripts/unprocessed/submissions/mfahadm8@gmail.com/1721685665/train.py",
                 "--user_ml_output_csv_s3_uri",
-                "s3://jkpfactors-user-scripts/unprocessed/submissions/mfahadm8@gmail.com/1721685665/results.parquet"
+                "s3://jkpfactors-user-scripts/unprocessed/submissions/mfahadm8@gmail.com/1721685665/test_results.csv"
             ],
         }
     ]
