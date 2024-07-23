@@ -90,17 +90,16 @@ class ApiStack(Stack):
                 title="sfn-request-schema",
                 type=apig.JsonSchemaType.OBJECT,
                 properties={
-                    "name": apig.JsonSchema(type=apig.JsonSchemaType.STRING),
-                    "compute": apig.JsonSchema(type=apig.JsonSchemaType.STRING),
                     "user_ml_output_csv_s3_uri": apig.JsonSchema(type=apig.JsonSchemaType.STRING),
                     "user_ml_script_s3_uri": apig.JsonSchema(type=apig.JsonSchemaType.STRING),
+                    "submission_timestamp": apig.JsonSchema(type=apig.JsonSchemaType.STRING),
                     "model_name": apig.JsonSchema(type=apig.JsonSchemaType.STRING),
                     "user_name": apig.JsonSchema(type=apig.JsonSchemaType.STRING),
                     "email": apig.JsonSchema(type=apig.JsonSchemaType.STRING),
                 },
                 required=[
-                    "name", "compute", "user_ml_output_csv_s3_uri",
-                    "user_ml_script_s3_uri", "model_name", "user_name", "email"
+                    "user_ml_output_csv_s3_uri",
+                    "user_ml_script_s3_uri", "submission_timestamp","model_name", "user_name", "email"
                 ],
             ),
         )

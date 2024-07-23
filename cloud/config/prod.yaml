@@ -5,6 +5,16 @@ network:
   vpc:
     cidr: 10.1.0.0/16
 
+compute:
+  batchjob:
+    env:
+      USER_SCRIPTS_BUCKET_NAME: jkpfactors-user-scripts
+      INTEGRITY_CHECK_DATA_S3_URI: "s3://jkpfactors-training-data/integrity-check/"
+      INTEGRITY_CHECK_DATA_LOCAL_PATH: "integrity-check/"
+      COMPLETE_DATA_S3_URI: "s3://jkpfactors-training-data/complete/"
+      COMPLETE_DATA_PATH: "data/"
+      SHOULD_PERFORM_COMPLETE_TRAINING: True
+      
 storage:
   s3:
     scripts_upload_bucket: jkpfactors-user-scripts

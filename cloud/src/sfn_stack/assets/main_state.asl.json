@@ -6,7 +6,6 @@
       "Type": "Task",
       "Resource": "arn:aws:states:::batch:submitJob.sync",
       "Parameters": {
-        "JobName.$": "$.name",
         "JobDefinition": "arn:aws:batch:${REGION}:${ACCOUNT}:job-definition/${JOB_DEFINITION}",
         "JobQueue": "arn:aws:batch:${REGION}:${ACCOUNT}:job-queue/${JOB_QUEUE}",
         "ContainerOverrides": {
