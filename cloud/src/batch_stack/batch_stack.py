@@ -76,12 +76,11 @@ class BatchJobStack(Stack):
                 iam.ServicePrincipal("ecs-tasks.amazonaws.com"),
             ),
             managed_policies=[
-                iam.ManagedPolicy.from_aws_managed_policy_name(
-                    "service-role/AmazonEC2ContainerServiceforEC2Role"
-                ),
-                iam.ManagedPolicy.from_aws_managed_policy_name(
-                    "AWSXrayWriteOnlyAccess"
-                ),
+                iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AmazonEC2ContainerServiceforEC2Role"),
+                iam.ManagedPolicy.from_aws_managed_policy_name("AWSXrayWriteOnlyAccess"),
+                iam.ManagedPolicy.from_aws_managed_policy_name("AmazonS3FullAccess"),
+                iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSESFullAccess"),
+                iam.ManagedPolicy.from_aws_managed_policy_name("AmazonDynamoDBFullAccess"),
             ],
         )
 
