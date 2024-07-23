@@ -94,11 +94,11 @@ def get_file_upload_link(event):
 
 def get_benchmarks():
     benchmarks_response = benchmarks_table.scan()
-    brands = benchmarks_response.get("Items", {})
+    benchmarks = benchmarks_response.get("Items", {})
 
     return {
         "statusCode": 200,
-        "body": json.dumps({"brands": brands}, cls=DecimalEncoder),
+        "body": json.dumps({"benchmarks": benchmarks}, cls=DecimalEncoder),
     }
 
 def add_submission(event):

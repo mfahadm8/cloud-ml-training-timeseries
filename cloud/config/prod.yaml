@@ -13,7 +13,7 @@ compute:
       INTEGRITY_CHECK_DATA_LOCAL_PATH: "integrity-check/"
       COMPLETE_DATA_S3_URI: "s3://jkpfactors-training-data/complete/"
       COMPLETE_DATA_PATH: "data/"
-      SHOULD_PERFORM_COMPLETE_TRAINING: True
+      SHOULD_PERFORM_COMPLETE_TRAINING: "True"
       
 storage:
   s3:
