@@ -6,7 +6,7 @@
       "Type": "Task",
       "Resource": "arn:aws:states:::batch:submitJob.sync",
       "Parameters": {
-        "JobName.$": "States.Format('{} {} {}', $.email, $.submission_timestamp, $.model_name)",
+        "JobName.$": "States.Format('JOB-{}', $.submission_timestamp)",
         "JobDefinition": "arn:aws:batch:${REGION}:${ACCOUNT}:job-definition/${JOB_DEFINITION}",
         "JobQueue": "arn:aws:batch:${REGION}:${ACCOUNT}:job-queue/${JOB_QUEUE}",
         "ContainerOverrides": {

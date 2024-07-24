@@ -6,9 +6,9 @@ from aws_cdk import aws_logs as cwlogs
 from aws_cdk import aws_stepfunctions as sfn
 from constructs import Construct
 from typing import Dict, List
-import time
 
 from .crud_lambda import CrudLambda
+
 class ApiStack(Stack):
     """API Gateway of the solution."""
     def __init__(
@@ -45,11 +45,39 @@ class ApiStack(Stack):
                     cwlogs.LogGroup(self, "prod-api-logs")
                 ),
             ),
+            default_cors_preflight_options={
+                "allow_origins": apig.Cors.ALL_ORIGINS,
+                "allow_methods": apig.Cors.ALL_METHODS,
+                "allow_headers": apig.Cors.DEFAULT_HEADERS,
+            },
         )
 
-        
         self._api_sfn_execute(api, api_role, sfn_state_machine)
-        self._api_crud(api,config)
+        self._api_crud(api, config)
+
+        # Create API Key and Usage Plan
+        api_key = api.add_api_key(
+            "ApiKey",
+            api_key_name="batch-mltraining-api-key",
+            description="API Key for batch-mltraining",
+        )
+
+        usage_plan = api.add_usage_plan(
+            "UsagePlan",
+            name="batch-mltraining-usage-plan",
+            description="Usage plan for batch-mltraining API",
+            throttle=apig.ThrottleSettings(
+                rate_limit=100,
+                burst_limit=200,
+            ),
+            quota=apig.QuotaSettings(
+                limit=10000,
+                period=apig.Period.DAY,
+            ),
+        )
+
+        usage_plan.add_api_stage(api=api,stage=api.deployment_stage)
+        usage_plan.add_api_key(api_key=api_key)
 
         cdk.CfnOutput(
             self,
@@ -65,7 +93,7 @@ class ApiStack(Stack):
             value=api.rest_api_id,
             description="ML training Batch API ID",
         )
-
+            
     def _api_sfn_execute(
         self,
         api: apig.RestApi,
@@ -104,19 +132,18 @@ class ApiStack(Stack):
             ),
         )
 
-        time.strftime("%Y%m%d-%H%M%S")
         integration_request_mapping_template = f"""
             #set($data = $util.escapeJavaScript($input.json('$')))
             {{
                 "input": "$data",
                 "stateMachineArn": "{sfn_state_machine.state_machine_arn}"
-              }}
-          """
+            }}
+        """
         integration_response_mapping_template = """
-          {
-              "executionArn":$input.json('$.executionArn')
-          }
-          """
+        {
+            "executionArn":$input.json('$.executionArn')
+        }
+        """
         integration_response = apig.IntegrationResponse(
             status_code="200",
             response_templates={
@@ -136,13 +163,12 @@ class ApiStack(Stack):
             },
         )
 
-        # https://docs.aws.amazon.com/fr_fr/step-functions/latest/dg/tutorial-api-gateway.html
         api_integration = apig.AwsIntegration(
             service="states",
             action="StartExecution",
             options=api_integration_options,
         )
-        # Step Function API
+
         method_response = apig.MethodResponse(
             status_code="200",
         )
@@ -151,7 +177,7 @@ class ApiStack(Stack):
             "POST",
             integration=api_integration,
             method_responses=[method_response],
-            authorization_type=apig.AuthorizationType.IAM,
+            authorization_type=apig.AuthorizationType.NONE,
             request_models={"application/json": request_model},
             request_parameters=None,
             request_validator=apig.RequestValidator(
@@ -161,10 +187,40 @@ class ApiStack(Stack):
                 validate_request_body=True,
                 validate_request_parameters=True,
             ),
+            api_key_required=True,
         )
 
+        # # Add CORS options only if not already present
+        # if not api_resource_execute.get_resource("OPTIONS"):
+        #     api_resource_execute.add_method(
+        #         "OPTIONS",
+        #         apig.MockIntegration(
+        #             integration_responses=[
+        #                 apig.IntegrationResponse(
+        #                     status_code="200",
+        #                     response_parameters={
+        #                         "method.response.header.Access-Control-Allow-Origin": "'*'",
+        #                         "method.response.header.Access-Control-Allow-Methods": "'POST,OPTIONS'",
+        #                         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+        #                     },
+        #                 )
+        #             ],
+        #             passthrough_behavior=apig.PassthroughBehavior.NEVER,
+        #             request_templates={"application/json": '{"statusCode": 200}'},
+        #         ),
+        #         method_responses=[
+        #             apig.MethodResponse(
+        #                 status_code="200",
+        #                 response_parameters={
+        #                     "method.response.header.Access-Control-Allow-Origin": True,
+        #                     "method.response.header.Access-Control-Allow-Methods": True,
+        #                     "method.response.header.Access-Control-Allow-Headers": True,
+        #                 },
+        #             )
+        #         ],
+        #     )
 
-    def _api_crud(self, api: apig.RestApi,config):
+    def _api_crud(self, api: apig.RestApi, config):
         crud_lambda = CrudLambda(self, "MlCrudLambda", config)
         # Add Lambda Integration
         integration_crud = apig.LambdaIntegration(
@@ -186,4 +242,35 @@ class ApiStack(Stack):
                     "statusCode": "200",
                 }
             ],
+            api_key_required=True,
         )
+
+        # # Add CORS Options Method for CRUD
+        # if not resource_crud_proxy.get_resource("OPTIONS"):
+        #     resource_crud_proxy.add_method(
+        #         "OPTIONS",
+        #         apig.MockIntegration(
+        #             integration_responses=[
+        #                 apig.IntegrationResponse(
+        #                     status_code="200",
+        #                     response_parameters={
+        #                         "method.response.header.Access-Control-Allow-Origin": "'*'",
+        #                         "method.response.header.Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'",
+        #                         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+        #                     },
+        #                 )
+        #             ],
+        #             passthrough_behavior=apig.PassthroughBehavior.NEVER,
+        #             request_templates={"application/json": '{"statusCode": 200}'},
+        #         ),
+        #         method_responses=[
+        #             apig.MethodResponse(
+        #                 status_code="200",
+        #                 response_parameters={
+        #                     "method.response.header.Access-Control-Allow-Origin": True,
+        #                     "method.response.header.Access-Control-Allow-Methods": True,
+        #                     "method.response.header.Access-Control-Allow-Headers": True,
+        #                 },
+        #             )
+        #         ],
+        #     )
