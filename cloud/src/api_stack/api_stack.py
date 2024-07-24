@@ -53,7 +53,7 @@ class ApiStack(Stack):
         )
 
         self._api_sfn_execute(api, api_role, sfn_state_machine)
-        self._api_crud(api, config)
+        self._api_crud(api, config,sfn_state_machine)
 
         # Create API Key and Usage Plan
         api_key = api.add_api_key(
@@ -220,8 +220,8 @@ class ApiStack(Stack):
         #         ],
         #     )
 
-    def _api_crud(self, api: apig.RestApi, config):
-        crud_lambda = CrudLambda(self, "MlCrudLambda", config)
+    def _api_crud(self, api: apig.RestApi, config:Dict,sfn_state_machine: sfn.IStateMachine,):
+        crud_lambda = CrudLambda(self, "MlCrudLambda", config, sfn_state_machine)
         # Add Lambda Integration
         integration_crud = apig.LambdaIntegration(
             crud_lambda.crud_lambda,

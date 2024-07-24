@@ -4,6 +4,7 @@ from aws_cdk import (
     aws_apigateway as apigateway,
     aws_apigatewayv2 as apigatewayv2,
     aws_ec2 as ec2,
+    aws_stepfunctions as sfn,
     Duration,
     CfnOutput,
     BundlingOptions,
@@ -17,12 +18,12 @@ from constructs import Construct
 class CrudLambda(Construct):
     _config: Dict
 
-    def __init__(self, scope: Construct, id: str, config: Dict) -> None:
+    def __init__(self, scope: Construct, id: str, config: Dict, sfn_state_machine: sfn.IStateMachine) -> None:
         super().__init__(scope, id)
         self._config = config
-        self.__create_crud_lambda()
+        self.__create_crud_lambda(sfn_state_machine)
 
-    def __create_crud_lambda(self):
+    def __create_crud_lambda(self,sfn_state_machine:sfn.IStateMachine):
         # Create IAM Role for Lambda
         crud_role = iam.Role(
             self,
@@ -49,7 +50,8 @@ class CrudLambda(Construct):
             },
             role_name="CrudLambdaRole"+self._config["stage"]
         )
-
+        crud_role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name("AWSStepFunctionsFullAccess"))
+        
         self.crud_lambda = lambda_.Function(
             self,
             "MlCrudLambda"+self._config["stage"],
@@ -59,7 +61,8 @@ class CrudLambda(Construct):
             environment={
                 "USER_SCRIPTS_BUCKET_NAME": self._config["storage"]["s3"]["scripts_upload_bucket"],
                 "BENCHMARKS_TABLE": self._config["storage"]["db"]["benchmarks_table"],
-                "SUBMISSIONS_TABLE": self._config["storage"]["db"]["submissions_table"]
+                "SUBMISSIONS_TABLE": self._config["storage"]["db"]["submissions_table"],
+                "STATE_MACHINE_ARN": sfn_state_machine.state_machine_arn
 
             },
             code=lambda_.Code.from_asset(

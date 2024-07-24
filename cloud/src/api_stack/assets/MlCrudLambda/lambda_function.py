@@ -16,9 +16,11 @@ from jsonschema import validate
 BENCHMARKS_TABLE_NAME = os.environ.get("BENCHMARKS_TABLE", "benchmarks")
 USER_SCRIPTS_BUCKET_NAME = os.environ.get("USER_SCRIPTS_BUCKET_NAME", "jkpfactors-user-scripts")
 SUBMISSIONS_TABLE_NAME = os.environ.get("SUBMISSIONS_TABLE", "submissions")
+STATE_MACHINE_ARN = os.environ.get("STATE_MACHINE_ARN")
 
-# Initialize DynamoDB
+# Initialize AWS clients
 dynamodb = boto3.resource("dynamodb")
+sfn_client = boto3.client("stepfunctions")
 benchmarks_table = dynamodb.Table(BENCHMARKS_TABLE_NAME)
 submissions_table = dynamodb.Table(SUBMISSIONS_TABLE_NAME)
 
@@ -115,6 +117,16 @@ def add_submission(event):
     # Put the item in the DynamoDB table
     try:
         submissions_table.put_item(Item=payload)
+        
+        # Start the Step Functions execution
+        response = sfn_client.start_execution(
+            stateMachineArn=STATE_MACHINE_ARN,
+            name=f"jOB-{payload['submission_timestamp']}",
+            input=json.dumps(payload)
+        )
+        
+        logger.info(response)
+        
         return {
             "statusCode": 200,
             "body": json.dumps({"message": "Job Submitted!"})
