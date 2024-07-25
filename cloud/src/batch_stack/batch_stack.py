@@ -106,6 +106,11 @@ class BatchJobStack(Stack):
                 iam.ManagedPolicy.from_aws_managed_policy_name(
                     "AWSXrayWriteOnlyAccess"
                 ),
+                iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AmazonEC2ContainerServiceforEC2Role"),
+                iam.ManagedPolicy.from_aws_managed_policy_name("AWSXrayWriteOnlyAccess"),
+                iam.ManagedPolicy.from_aws_managed_policy_name("AmazonS3FullAccess"),
+                iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSESFullAccess"),
+                iam.ManagedPolicy.from_aws_managed_policy_name("AmazonDynamoDBFullAccess"),
             ],
             inline_policies={
                 "get-ssm-parameters": iam.PolicyDocument(
@@ -127,7 +132,7 @@ class BatchJobStack(Stack):
                         )
                     ]
                 )
-            },
+            }
         )
 
         training_data_s3_bucket.grant_read_write(batch_job_role)
@@ -206,6 +211,7 @@ class BatchJobStack(Stack):
             "COMPLETE_DATA_S3_URI": config["compute"]["batchjob"]["env"].get("COMPLETE_DATA_S3_URI"),
             "COMPLETE_DATA_PATH": config["compute"]["batchjob"]["env"].get("COMPLETE_DATA_PATH"),
             "SHOULD_PERFORM_COMPLETE_TRAINING": config["compute"]["batchjob"]["env"].get("SHOULD_PERFORM_COMPLETE_TRAINING"),
+            "AWS_DEFAULT_REGION": config["aws_region"],
               
         }
 

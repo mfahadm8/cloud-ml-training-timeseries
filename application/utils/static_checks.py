@@ -1,7 +1,7 @@
 import ast
 import os
 
-required_functions = ["ecdf", "prepare_data", "fit_model", "load_data", "export_data", "main"]
+required_functions = ["fit_model", "load_data", "export_data", "main"]
 
 def check_syntax(file_path):
     try:

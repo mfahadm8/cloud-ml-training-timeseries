@@ -128,3 +128,6 @@ class NetworkStack(Stack):
             service=ec2.InterfaceVpcEndpointAwsService.EC2,
             subnets=subnet_selection_interface,
         )
+        self.vpc.add_gateway_endpoint("DynamoDbEndpoint",
+            service=ec2.GatewayVpcEndpointAwsService.DYNAMODB
+        )
