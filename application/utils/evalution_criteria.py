@@ -15,7 +15,20 @@ def calculate_sharpe_ratio():
         pf= pd.read_csv("data/training_results.csv")
         
         #getting rets attached to weights
-        sharpe_df = pd.merge(pf, chars[['id', 'eom', 'ret_exc_lead1m']], on=['id', 'eom'], how='left')
+        sharpe_df = pd.merge(
+            pf.assign(
+                id=pf['id'].astype('int64'),
+                eom=pd.to_datetime(pf['eom']),
+                w=pf['w'].astype('float64')
+            )[['id', 'eom', 'w']],
+            chars.assign(
+                id=chars['id'].astype('int64'),
+                eom=pd.to_datetime(chars['eom']),
+                ret_exc_lead1m=chars['ret_exc_lead1m'].astype('float64')
+            )[['id', 'eom', 'ret_exc_lead1m']],
+            on=['id', 'eom'],
+            how='left'
+        )
 
         # Calculate weighted returns
         sharpe_df['w_ret'] = sharpe_df['w'] * sharpe_df['ret_exc_lead1m']
@@ -30,7 +43,7 @@ def calculate_sharpe_ratio():
         # calculate sharpe
         sharpe = average_ret/volatility
 
-        return True, sharpe
+        return True, str(sharpe)
 
     except Exception as e:
         return False, str(e)

@@ -13,10 +13,12 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "args": [
-                "--user_ml_script_s3_uri",
-                "s3://jkpfactors-user-scripts/unprocessed/submissions/mfahadm8@gmail.com/1721685665/train.py",
-                "--user_ml_output_csv_s3_uri",
-                "s3://jkpfactors-user-scripts/unprocessed/submissions/mfahadm8@gmail.com/1721685665/test_results.csv"
+               "--user_ml_script_s3_uri","s3://jkpfactors-user-scripts/unprocessed/submissions/mfahadm8@gmail.com/1721685665/train.py",
+               "--user_ml_output_csv_s3_uri","s3://jkpfactors-user-scripts/unprocessed/submissions/mfahadm8@gmail.com/1721685665/test_results.csv",
+               "--model_name","test model",
+               "--user_name","Muhammad Fahad Mustafa",
+               "--email","mfahadm8@gmail.com",
+               "--submission_timestamp","1721774695"
             ],
         }
     ]
