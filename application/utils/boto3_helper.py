@@ -55,10 +55,10 @@ def store_sharpe_ratio_in_dynamodb(sharpe_ratio, submission_timestamp, email, us
     dynamodb.put_item(
         TableName='benchmarks',
         Item={
-            'SharpeRatio': {'S': sharpe_ratio},
-            'SubmissionTimestamp': {'S': submission_timestamp},
-            'Email': {'S': email},
-            'UserName': {'S': user_name},
-            'ModelName': {'S': model_name}
+            'sharpe': {'S': sharpe_ratio},
+            'submission_timestamp': {'S': submission_timestamp},
+            'email': {'S': email},
+            'user_name': {'S': user_name},
+            'model_name': {'S': model_name}
         }
     )
