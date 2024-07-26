@@ -31,6 +31,12 @@ def upload_script_to_s3(script_file,output_file, bucket_name, email, submission_
     s3.upload_file(script_file, bucket_name, accepted_script_key)
     s3.upload_file(script_file, bucket_name, accepted_output_key)
 
+
+def upload_weights_to_s3(script_file, bucket_name, email, submission_timestamp):
+    s3 = boto3.client('s3')
+    output_key = f"unprocessed/trainings/{email}/{submission_timestamp}/{script_file}"
+    s3.upload_file(script_file, bucket_name, output_key)
+
 def send_failure_email(email, message):
     ses = boto3.client('ses')
     ses.send_email(

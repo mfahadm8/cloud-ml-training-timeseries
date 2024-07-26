@@ -205,7 +205,7 @@ class BatchJobStack(Stack):
         job_definition_container_env_base = {
             "AWS_XRAY_SDK_ENABLED": "true",
             "S3_BUCKET": ml_batch_jobs_bucket.bucket_name,
-            "USER_SCRIPTS_BUCKET_NAME":  ml_batch_jobs_bucket.bucket_name,
+            "USER_SCRIPTS_BUCKET_NAME":  scripts_s3_bucket.bucket_name,
             "INTEGRITY_CHECK_DATA_S3_URI": config["compute"]["batchjob"]["env"].get("INTEGRITY_CHECK_DATA_S3_URI"),
             "INTEGRITY_CHECK_DATA_LOCAL_PATH": config["compute"]["batchjob"]["env"].get("INTEGRITY_CHECK_DATA_LOCAL_PATH"),
             "COMPLETE_DATA_S3_URI": config["compute"]["batchjob"]["env"].get("COMPLETE_DATA_S3_URI"),
