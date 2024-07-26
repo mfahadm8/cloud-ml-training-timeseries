@@ -211,6 +211,7 @@ class BatchJobStack(Stack):
             "COMPLETE_DATA_S3_URI": config["compute"]["batchjob"]["env"].get("COMPLETE_DATA_S3_URI"),
             "COMPLETE_DATA_PATH": config["compute"]["batchjob"]["env"].get("COMPLETE_DATA_PATH"),
             "SHOULD_PERFORM_COMPLETE_TRAINING": config["compute"]["batchjob"]["env"].get("SHOULD_PERFORM_COMPLETE_TRAINING"),
+            "SHOULD_PERFORM_INTEGRITY_CHECK": config["compute"]["batchjob"]["env"].get("SHOULD_PERFORM_INTEGRITY_CHECK"),
             "AWS_DEFAULT_REGION": config["aws_region"],
               
         }

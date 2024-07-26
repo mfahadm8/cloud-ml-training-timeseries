@@ -14,7 +14,8 @@ compute:
       COMPLETE_DATA_S3_URI: "s3://jkpfactors-training-data/complete/"
       COMPLETE_DATA_PATH: "data/"
       SHOULD_PERFORM_COMPLETE_TRAINING: "True"
-      
+      SHOULD_PERFORM_INTEGRITY_CHECK: "True"  
+
 storage:
   s3:
     scripts_upload_bucket: jkpfactors-user-scripts
