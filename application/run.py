@@ -4,14 +4,16 @@ from utils.evalution_criteria import calculate_sharpe_ratio,check_required_colum
 from utils.runtime_checks import run_script
 from utils.static_checks import perform_static_checks
 from utils.replace_func import update_script_with_template_functions
-from utils.boto3_helper import store_sharpe_ratio_in_dynamodb,send_failure_email,upload_script_to_s3,download_from_s3
+from utils.boto3_helper import store_sharpe_ratio_in_dynamodb,send_failure_email,upload_script_to_s3,download_from_s3,upload_weights_to_s3
 
 USER_SCRIPTS_BUCKET_NAME = os.environ.get("USER_SCRIPTS_BUCKET_NAME", "jkpfactors-user-scripts")
 INTEGRITY_CHECK_DATA_S3_URI = os.environ.get("INTEGRITY_CHECK_DATA_S3_URI","s3://jkpfactors-training-data/integrity-check/")
 INTEGRITY_CHECK_DATA_LOCAL_PATH = os.environ.get("INTEGRITY_CHECK_DATA_LOCAL_PATH","integrity-check/")
 COMPLETE_DATA_S3_URI = os.environ.get("COMPLETE_DATA_S3_URI","s3://jkpfactors-training-data/complete/")
 COMPLETE_DATA_PATH = os.environ.get("COMPLETE_DATA_PATH","data/")
-SHOULD_PERFORM_COMPLETE_TRAINING= os.environ.get("SHOULD_PERFORM_COMPLETE_TRAINING",True)
+SHOULD_PERFORM_COMPLETE_TRAINING = os.environ.get("SHOULD_PERFORM_COMPLETE_TRAINING",False)
+SHOULD_PERFORM_INTEGRITY_CHECK = os.environ.get("SHOULD_PERFORM_INTEGRITY_CHECK",False)
+AWS_DEFAULT_REGION = os.environ.get("AWS_DEFAULT_REGION","us-east-1")
 
 def perform_integrity_check(script_file, output_file):
     
@@ -52,20 +54,22 @@ def main(user_ml_script_s3_uri, user_ml_output_csv_s3_uri,submission_timestamp,e
     # Download the files from S3
     download_from_s3(user_ml_script_s3_uri, script_file)
     download_from_s3(user_ml_output_csv_s3_uri, output_file)
-    download_from_s3(INTEGRITY_CHECK_DATA_S3_URI,INTEGRITY_CHECK_DATA_LOCAL_PATH)
+    
+    is_valid = True
+
+    if SHOULD_PERFORM_INTEGRITY_CHECK:
+        download_from_s3(INTEGRITY_CHECK_DATA_S3_URI,INTEGRITY_CHECK_DATA_LOCAL_PATH)
+
+        # Run integrity checks
+        is_valid, message = perform_integrity_check(script_file, output_file)
+        print(message)
+        
+        if is_valid:
+            upload_script_to_s3(script_file,output_file,USER_SCRIPTS_BUCKET_NAME,email,submission_timestamp)
+        else:
+            send_failure_email(email=email,message=message)
 
 
-    
-    # Run integrity checks
-    is_valid, message = perform_integrity_check(script_file, output_file)
-    print(message)
-    
-    if is_valid:
-        upload_script_to_s3(script_file,output_file,USER_SCRIPTS_BUCKET_NAME,email,submission_timestamp)
-    else:
-        send_failure_email(email=email,message=message)
-        
-        
     if is_valid and SHOULD_PERFORM_COMPLETE_TRAINING:
         
         # Step 1: Replace data loading and export function in the script file
@@ -92,11 +96,10 @@ def main(user_ml_script_s3_uri, user_ml_output_csv_s3_uri,submission_timestamp,e
         is_valid, message = calculate_sharpe_ratio()
         if not is_valid:
             return False, message
-        
+            
+        upload_weights_to_s3(USER_SCRIPTS_BUCKET_NAME,email,submission_timestamp)
         store_sharpe_ratio_in_dynamodb(sharpe_ratio=message,submission_timestamp=submission_timestamp,email=email,user_name=user_name,model_name=model_name)
-        
-    else:
-        print("Integrity checks failed. Exiting.")
+            
 
 if __name__ == "__main__":
     import argparse
