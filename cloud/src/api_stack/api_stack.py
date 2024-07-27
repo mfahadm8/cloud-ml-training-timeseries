@@ -37,8 +37,7 @@ class ApiStack(Stack):
             description="ML training managed by AWS Batch",
             deploy_options=apig.StageOptions(
                 metrics_enabled=True,
-                caching_enabled=True,
-                cache_data_encrypted=True,
+                caching_enabled=False,
                 logging_level=apig.MethodLoggingLevel.INFO,
                 tracing_enabled=True,
                 access_log_destination=apig.LogGroupLogDestination(
@@ -52,7 +51,7 @@ class ApiStack(Stack):
             },
         )
 
-        self._api_sfn_execute(api, api_role, sfn_state_machine)
+        # self._api_sfn_execute(api, api_role, sfn_state_machine)
         self._api_crud(api, config,sfn_state_machine)
 
         # Create API Key and Usage Plan

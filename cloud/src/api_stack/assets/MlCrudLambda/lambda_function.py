@@ -121,7 +121,7 @@ def add_submission(event):
         # Start the Step Functions execution
         response = sfn_client.start_execution(
             stateMachineArn=STATE_MACHINE_ARN,
-            name=f"jOB-{payload['submission_timestamp']}",
+            name=f"job-{payload['submission_timestamp']}",
             input=json.dumps(payload)
         )
         

@@ -40,7 +40,7 @@ def upload_weights_to_s3(bucket_name, email, submission_timestamp):
 def send_failure_email(email, message):
     ses = boto3.client('ses')
     ses.send_email(
-        Source='your-email@example.com',
+        Source='no-reply@jkpfactors.com',
         Destination={
             'ToAddresses': [email],
         },

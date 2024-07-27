@@ -109,6 +109,11 @@ class NetworkStack(Stack):
             subnets=subnet_selection_interface,
         )
         self.vpc.add_interface_endpoint(
+            "vpce-ses",
+            service=ec2.InterfaceVpcEndpointAwsService.SES,
+            subnets=subnet_selection_interface,
+        )
+        self.vpc.add_interface_endpoint(
             "vpce-ssm",
             service=ec2.InterfaceVpcEndpointAwsService.SSM,
             subnets=subnet_selection_interface,
