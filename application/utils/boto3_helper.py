@@ -1,6 +1,9 @@
 import boto3
 import os
-
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import smtplib
+import json
 
 def download_from_s3(s3_uri, local_path):
     s3 = boto3.client('s3')
@@ -37,24 +40,34 @@ def upload_weights_to_s3(bucket_name, email, submission_timestamp):
     output_key = f"unprocessed/trainings/{email}/{submission_timestamp}/{'training_results.csv'}"
     s3.upload_file('data/training_results.csv', bucket_name, output_key)
 
-def send_failure_email(email, message):
-    ses = boto3.client('ses')
-    ses.send_email(
-        Source='no-reply@jkpfactors.com',
-        Destination={
-            'ToAddresses': [email],
-        },
-        Message={
-            'Subject': {
-                'Data': 'Script Integrity Check Failed',
-            },
-            'Body': {
-                'Text': {
-                    'Data': message,
-                },
-            },
-        }
+def get_ssm_parameter(name):
+    ssm_client = boto3.client('ssm')
+    response = ssm_client.get_parameter(
+        Name=name,
+        WithDecryption=True
     )
+    return response['Parameter']['Value']
+
+def send_failure_email(email, message):
+    # get SES SMTP email credentials from SSM Parameter Store
+    smtp_username = get_ssm_parameter('SMTP_USER')
+    smtp_password = get_ssm_parameter('SMTP_PASSWORD')
+    smtp_host = 'email-smtp.us-east-1.amazonaws.com'
+    smtp_port = 25
+
+    # create email
+    msg = MIMEMultipart()
+    msg['From'] = "no-reply@jkpfactors.com"
+    msg['To'] = email
+    msg['Subject'] = "Script Integrity Check Failed"
+    msg.attach(MIMEText(message, 'plain'))
+
+    # send email
+    server = smtplib.SMTP(smtp_host, smtp_port)
+    server.starttls()
+    server.login(smtp_username, smtp_password)
+    server.sendmail(msg['From'], msg['To'], msg.as_string())
+    server.quit()
 
 def store_sharpe_ratio_in_dynamodb(sharpe_ratio, submission_timestamp, email, user_name, model_name):
     dynamodb = boto3.client('dynamodb')
