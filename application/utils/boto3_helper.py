@@ -41,7 +41,7 @@ def upload_weights_to_s3(bucket_name, email, submission_timestamp):
     s3.upload_file('data/training_results.csv', bucket_name, output_key)
 
 def get_ssm_parameter(name):
-    ssm_client = boto3.client('ssm')
+    ssm_client = boto3.client('ssm',region_name="us-east-1")
     response = ssm_client.get_parameter(
         Name=name,
         WithDecryption=True
@@ -52,7 +52,7 @@ def send_failure_email(email, message):
     # get SES SMTP email credentials from SSM Parameter Store
     smtp_username = get_ssm_parameter('SMTP_USER')
     smtp_password = get_ssm_parameter('SMTP_PASSWORD')
-    smtp_host = 'email-smtp.us-east-1.amazonaws.com'
+    smtp_host = get_ssm_parameter('SMTP_ENDPOINT')
     smtp_port = 25
 
     # create email

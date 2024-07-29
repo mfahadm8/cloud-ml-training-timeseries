@@ -5,16 +5,38 @@ from utils.runtime_checks import run_script
 from utils.static_checks import perform_static_checks
 from utils.replace_func import update_script_with_template_functions
 from utils.boto3_helper import store_sharpe_ratio_in_dynamodb,send_failure_email,upload_script_to_s3,download_from_s3,upload_weights_to_s3
+import logging
+import re
 
 USER_SCRIPTS_BUCKET_NAME = os.environ.get("USER_SCRIPTS_BUCKET_NAME", "jkpfactors-user-scripts")
 INTEGRITY_CHECK_DATA_S3_URI = os.environ.get("INTEGRITY_CHECK_DATA_S3_URI","s3://jkpfactors-training-data/integrity-check/")
 INTEGRITY_CHECK_DATA_LOCAL_PATH = os.environ.get("INTEGRITY_CHECK_DATA_LOCAL_PATH","integrity-check/")
 COMPLETE_DATA_S3_URI = os.environ.get("COMPLETE_DATA_S3_URI","s3://jkpfactors-training-data/complete/")
 COMPLETE_DATA_PATH = os.environ.get("COMPLETE_DATA_PATH","data/")
-SHOULD_PERFORM_COMPLETE_TRAINING = os.environ.get("SHOULD_PERFORM_COMPLETE_TRAINING",False)
-SHOULD_PERFORM_INTEGRITY_CHECK = os.environ.get("SHOULD_PERFORM_INTEGRITY_CHECK",False)
+SHOULD_PERFORM_COMPLETE_TRAINING = os.environ.get("SHOULD_PERFORM_COMPLETE_TRAINING","False")=="True"
+SHOULD_PERFORM_INTEGRITY_CHECK = os.environ.get("SHOULD_PERFORM_INTEGRITY_CHECK","True")=="True"
 AWS_DEFAULT_REGION = os.environ.get("AWS_DEFAULT_REGION","us-east-1")
 
+logging.getLogger().setLevel(logging.DEBUG)
+
+def decode_file(file_name):
+    # Read the string representation of the code from the input file
+    with open(file_name, 'r') as file:
+        code_str = file.read()
+
+    # Remove the leading and trailing quotes if they exist
+    if code_str.startswith('"') and code_str.endswith('"'):
+        code_str = code_str[1:-1]
+
+    # Convert common escape sequences
+    normal_code = code_str.replace(r'\r\n', '\n').replace(r'\n', '\n').replace(r'\/', '/').replace(r'\t', '\t').encode().decode('unicode_escape')
+
+    # Write the converted code to the output file
+    with open(file_name, 'w') as file:
+        file.write(normal_code)
+
+    logging.info(f"The file has been successfully decoded to {file_name}")
+            
 def perform_integrity_check(script_file, output_file):
     
     # Step 1: Static Checks
@@ -53,7 +75,10 @@ def main(user_ml_script_s3_uri, user_ml_output_csv_s3_uri,submission_timestamp,e
     
     # Download the files from S3
     download_from_s3(user_ml_script_s3_uri, script_file)
+    decode_file(script_file)
     download_from_s3(user_ml_output_csv_s3_uri, output_file)
+    decode_file(output_file)
+    
     
     is_valid = True
 
