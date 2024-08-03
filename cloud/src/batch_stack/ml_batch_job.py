@@ -103,6 +103,16 @@ class MlTrainingBatchJob(Construct):
                 "lt-" + proc_name + "-" + short_hash,
                 launch_template_name="batch-mltraining-lt-" + proc_name + "-" + short_hash + "-" + config["stage"],
                 user_data=multipart_user_data,
+                block_devices=[
+                        ec2.BlockDevice(
+                            device_name="/dev/xvda",  
+                            volume=ec2.BlockDeviceVolume.ebs(
+                                volume_size=150  
+                            )
+                        )
+                    ],
+                key_pair=ec2.KeyPair.from_key_pair_name(self,"jkpfactors-keypair","jkpfactors-dev.pem")
+            
             )
             compute_environment = batch.ManagedEc2EcsComputeEnvironment(
                 self,

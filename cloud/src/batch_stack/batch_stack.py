@@ -155,6 +155,9 @@ class BatchJobStack(Stack):
                 iam.ManagedPolicy.from_aws_managed_policy_name(
                     "AWSXrayWriteOnlyAccess"
                 ),
+                iam.ManagedPolicy.from_aws_managed_policy_name(
+                    "AmazonSSMReadOnlyAccess"
+                ),
             ],
         )
 
