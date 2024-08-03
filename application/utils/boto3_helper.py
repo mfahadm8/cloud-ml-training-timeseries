@@ -53,7 +53,7 @@ def send_failure_email(email, message):
     smtp_username = get_ssm_parameter('SMTP_USER')
     smtp_password = get_ssm_parameter('SMTP_PASSWORD')
     smtp_host = get_ssm_parameter('SMTP_ENDPOINT')
-    smtp_port = 25
+    smtp_port = get_ssm_parameter('SMTP_PORT')
 
     # create email
     msg = MIMEMultipart()

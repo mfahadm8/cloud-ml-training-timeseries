@@ -8,6 +8,33 @@ def check_required_columns(output_file="data/training_results.csv"):
     else:
         return True, "Required Columns Check Passed!"
 
+def compare_columns(output_file="data/training_results.csv", chars_file="data/ctff_chars.parquet"):
+    
+    chars = pd.read_parquet(chars_file)
+    output = pd.read_csv(output_file)
+        
+    # Filter DataFrames and select relevant columns
+    chars_filtered = chars.loc[chars['ctff_test'] == True, ['id', 'eom']]
+    output_filtered = output[['id', 'eom']]
+
+    # Convert 'output' columns to match 'chars' data types
+    chars_id_dtype = chars_filtered['id'].dtype
+    output_filtered.loc[:, 'id'] = output_filtered['id'].astype(chars_id_dtype)
+
+    # Normalize 'eom' column by converting both to datetime without time components
+    output_filtered.loc[:, 'eom'] = pd.to_datetime(output_filtered['eom']).dt.date
+    chars_filtered.loc[:, 'eom'] = pd.to_datetime(chars_filtered['eom']).dt.date
+
+    # Sort both DataFrames by 'id' and 'eom'
+    output_cols_sorted = output_filtered.sort_values(by=['id', 'eom']).reset_index(drop=True)
+    chars_cols_sorted = chars_filtered.sort_values(by=['id', 'eom']).reset_index(drop=True)
+
+    # Compare the 'id' and 'eom' columns
+    if chars_cols_sorted.equals(output_cols_sorted):
+        return True, "Columns match the required format."
+    else:
+        return False, "Columns do not match the required format."
+    
 def calculate_sharpe_ratio():
     try:
         #calculating sharpe:

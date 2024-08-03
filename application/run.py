@@ -3,15 +3,15 @@ import os
 from utils.evalution_criteria import calculate_sharpe_ratio,check_required_columns
 from utils.runtime_checks import run_script
 from utils.static_checks import perform_static_checks
-from utils.replace_func import update_script_with_template_functions
+from utils.replace_func import update_script_with_template_functions,replace_main_block
 from utils.boto3_helper import store_sharpe_ratio_in_dynamodb,send_failure_email,upload_script_to_s3,download_from_s3,upload_weights_to_s3
 import logging
 import re
 
 USER_SCRIPTS_BUCKET_NAME = os.environ.get("USER_SCRIPTS_BUCKET_NAME", "jkpfactors-user-scripts")
-INTEGRITY_CHECK_DATA_S3_URI = os.environ.get("INTEGRITY_CHECK_DATA_S3_URI","s3://jkpfactors-training-data/integrity-check/")
+INTEGRITY_CHECK_DATA_S3_URI = os.environ.get("INTEGRITY_CHECK_DATA_S3_URI","s3://jkpfactors-training-data/integrity-check/2024/")
 INTEGRITY_CHECK_DATA_LOCAL_PATH = os.environ.get("INTEGRITY_CHECK_DATA_LOCAL_PATH","integrity-check/")
-COMPLETE_DATA_S3_URI = os.environ.get("COMPLETE_DATA_S3_URI","s3://jkpfactors-training-data/complete/")
+COMPLETE_DATA_S3_URI = os.environ.get("COMPLETE_DATA_S3_URI","s3://jkpfactors-training-data/complete/2024/")
 COMPLETE_DATA_PATH = os.environ.get("COMPLETE_DATA_PATH","data/")
 SHOULD_PERFORM_COMPLETE_TRAINING = os.environ.get("SHOULD_PERFORM_COMPLETE_TRAINING","False")=="True"
 SHOULD_PERFORM_INTEGRITY_CHECK = os.environ.get("SHOULD_PERFORM_INTEGRITY_CHECK","True")=="True"
@@ -55,7 +55,9 @@ def perform_integrity_check(script_file, output_file):
         'export_data': 'templates/integrity_check/export_func.py',
     }
     update_script_with_template_functions(script_file,template_functions_mapping)
-    
+    main_block_template_path = "templates/integrity_check/main_block.py"
+    replace_main_block(script_file, main_block_template_path)
+
     # Step 4: replace data loading and export function in the script file
     is_valid, message = run_script(script_file)
     if not is_valid:
@@ -74,10 +76,10 @@ def main(user_ml_script_s3_uri, user_ml_output_csv_s3_uri,submission_timestamp,e
     output_file = user_ml_output_csv_s3_uri.split("/")[-1]
     
     # Download the files from S3
-    download_from_s3(user_ml_script_s3_uri, script_file)
-    decode_file(script_file)
-    download_from_s3(user_ml_output_csv_s3_uri, output_file)
-    decode_file(output_file)
+    # download_from_s3(user_ml_script_s3_uri, script_file)
+    # decode_file(script_file)
+    # download_from_s3(user_ml_output_csv_s3_uri, output_file)
+    # decode_file(output_file)
     
     
     is_valid = True
@@ -106,7 +108,10 @@ def main(user_ml_script_s3_uri, user_ml_output_csv_s3_uri,submission_timestamp,e
             'export_data': 'templates/complete_data/export_func.py',
         }
         update_script_with_template_functions(script_file,template_functions_mapping)
-        
+        # Replace the main block
+        main_block_template_path = "templates/complete_data/main_block.py"
+        replace_main_block(script_file, main_block_template_path)
+
         # Step 3: Run the downloaded script
         is_valid, message = run_script(script_file)
         if not is_valid:
