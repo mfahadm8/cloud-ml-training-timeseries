@@ -27,7 +27,7 @@ def download_from_s3(s3_uri, local_path):
                 s3.download_file(bucket, file_key, local_file_path)
 
 
-def upload_script_to_s3(script_file,output_file, bucket_name, email, submission_timestamp):
+def upload_script_to_s3(script_file,output_file, bucket_name, email, submission_timestamp,retrain:bool):
     s3 = boto3.client('s3')
     accepted_script_key = f"unprocessed/accepted/{email}/{submission_timestamp}/{script_file}"
     accepted_output_key = f"unprocessed/accepted/{email}/{submission_timestamp}/{output_file}"
@@ -35,11 +35,43 @@ def upload_script_to_s3(script_file,output_file, bucket_name, email, submission_
     s3.upload_file(script_file, bucket_name, accepted_output_key)
 
 
+def update_submissions_dynamodb(email, submission_timestamp, script_file, output_file, retrain,sharpe_ratio):
+    dynamodb = boto3.client('dynamodb')
+    current_date = datetime.now().strftime("%Y/%m")
+    
+    retrain_record = {
+        'weights': {'S': f"unprocessed/trainings/{email}/{submission_timestamp}/train/{current_date}/training_results.csv"},
+        'retrain':retrain,
+        'train_time': {'S': datetime.now().isoformat()},
+        'sharpe_ratio': {'S': sharpe_ratio} 
+    }
+
+    update_expression = "SET retrain_list = list_append(if_not_exists(retrain_list, :empty_list), :retrain_record)"
+    expression_attribute_values = {
+        ':retrain_record': {'L': [retrain_record]},
+        ':empty_list': {'L': []}
+    }
+
+    dynamodb.update_item(
+        TableName='submissions',
+        Key={
+            'email': {'S': email},
+            'submission_timestamp': {'S': submission_timestamp}
+        },
+        UpdateExpression=update_expression,
+        ExpressionAttributeValues=expression_attribute_values
+    )
+
 def upload_weights_to_s3(bucket_name, email, submission_timestamp):
     s3 = boto3.client('s3')
-    output_key = f"unprocessed/trainings/{email}/{submission_timestamp}/{'training_results.csv'}"
-    s3.upload_file('data/training_results.csv', bucket_name, output_key)
+    prefix = f"unprocessed/trainings/{email}/{submission_timestamp}"
+    
+    current_date = datetime.now().strftime("%Y/%m")
+    prefix = f"{prefix}/train/{current_date}"
 
+    output_key = f"{prefix}/training_results.csv"
+    s3.upload_file('data/training_results.csv', bucket_name, output_key)
+     
 def get_ssm_parameter(name):
     ssm_client = boto3.client('ssm',region_name="us-east-1")
     response = ssm_client.get_parameter(
@@ -71,13 +103,22 @@ def send_failure_email(email, message):
 
 def store_sharpe_ratio_in_dynamodb(sharpe_ratio, submission_timestamp, email, user_name, model_name):
     dynamodb = boto3.client('dynamodb')
-    dynamodb.put_item(
+    
+    # Define the update expression and attribute values
+    update_expression = "SET sharpe = :s, user_name = :un, model_name = :mn"
+    expression_attribute_values = {
+        ':s': {'S': sharpe_ratio},
+        ':un': {'S': user_name},
+        ':mn': {'S': model_name}
+    }
+    
+    # Perform the update
+    dynamodb.update_item(
         TableName='benchmarks',
-        Item={
-            'sharpe': {'S': sharpe_ratio},
-            'submission_timestamp': {'S': submission_timestamp},
+        Key={
             'email': {'S': email},
-            'user_name': {'S': user_name},
-            'model_name': {'S': model_name}
-        }
+            'submission_timestamp': {'S': submission_timestamp}
+        },
+        UpdateExpression=update_expression,
+        ExpressionAttributeValues=expression_attribute_values
     )

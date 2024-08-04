@@ -16,6 +16,7 @@ COMPLETE_DATA_PATH = os.environ.get("COMPLETE_DATA_PATH","data/")
 SHOULD_PERFORM_COMPLETE_TRAINING = os.environ.get("SHOULD_PERFORM_COMPLETE_TRAINING","False")=="True"
 SHOULD_PERFORM_INTEGRITY_CHECK = os.environ.get("SHOULD_PERFORM_INTEGRITY_CHECK","True")=="True"
 AWS_DEFAULT_REGION = os.environ.get("AWS_DEFAULT_REGION","us-east-1")
+RETRAIN = os.environ.get("RETRAIN","False")=="True"
 
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -49,6 +50,7 @@ def perform_integrity_check(script_file, output_file):
     if not is_valid:
         return False, message
 
+    is_valid, message = compare_columns(output_file)
     # Step 3: Runtime Checks
     template_functions_mapping = {
         'load_data': 'templates/integrity_check/load_func.py',
@@ -76,17 +78,17 @@ def main(user_ml_script_s3_uri, user_ml_output_csv_s3_uri,submission_timestamp,e
     output_file = user_ml_output_csv_s3_uri.split("/")[-1]
     
     # Download the files from S3
-    # download_from_s3(user_ml_script_s3_uri, script_file)
-    # decode_file(script_file)
-    # download_from_s3(user_ml_output_csv_s3_uri, output_file)
-    # decode_file(output_file)
+    download_from_s3(user_ml_script_s3_uri, script_file)
+    decode_file(script_file)
+    download_from_s3(user_ml_output_csv_s3_uri, output_file)
+    decode_file(output_file)
     
     
     is_valid = True
 
     if SHOULD_PERFORM_INTEGRITY_CHECK:
         download_from_s3(INTEGRITY_CHECK_DATA_S3_URI,INTEGRITY_CHECK_DATA_LOCAL_PATH)
-
+        download_from_s3(COMPLETE_DATA_S3_URI,COMPLETE_DATA_PATH)
         # Run integrity checks
         is_valid, message = perform_integrity_check(script_file, output_file)
         print(message)
@@ -128,7 +130,8 @@ def main(user_ml_script_s3_uri, user_ml_output_csv_s3_uri,submission_timestamp,e
             return False, message
             
         upload_weights_to_s3(USER_SCRIPTS_BUCKET_NAME,email,submission_timestamp)
-        store_sharpe_ratio_in_dynamodb(sharpe_ratio=message,submission_timestamp=submission_timestamp,email=email,user_name=user_name,model_name=model_name)
+        update_submissions_dynamodb(email, submission_timestamp, script_file, output_file, RETRAIN ,message)
+        store_sharpe_ratio_in_dynamodb(sharpe_ratio=message,submission_timestamp=submission_timestamp,email=email,user_name=user_name,model_name=model_name,retrain=RETRAIN)
             
 
 if __name__ == "__main__":

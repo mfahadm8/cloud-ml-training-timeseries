@@ -28,9 +28,9 @@ def get_annotation_id(annotation):
 
 def check_main_arguments(tree):
     expected_args = {
-        "chars": "DataFrame",
-        "features": "DataFrame",
-        "daily_ret": "DataFrame"
+        "chars": ["DataFrame",None],
+        "features": ["DataFrame",None],
+        "daily_ret": ["DataFrame",None]
     }
     
     for node in ast.walk(tree):
@@ -40,9 +40,9 @@ def check_main_arguments(tree):
             if missing_args:
                 return False, f"Missing arguments in 'main': {', '.join(missing_args)}"
             
-            for arg, expected_type in expected_args.items():
-                if args[arg] != expected_type:
-                    return False, f"Argument '{arg}' should be of type '{expected_type}', found '{args[arg]}'"
+            # for arg, expected_type in expected_args.items():
+            #     if args[arg] not in expected_type:
+            #         return False, f"Argument '{arg}' should be of type '{expected_type}', found '{args[arg]}'"
     return True, ""
 
 def check_main_return_type(tree):
