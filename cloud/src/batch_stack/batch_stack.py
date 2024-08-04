@@ -208,17 +208,15 @@ class BatchJobStack(Stack):
         job_definition_container_env_base = {
             "AWS_XRAY_SDK_ENABLED": "true",
             "S3_BUCKET": ml_batch_jobs_bucket.bucket_name,
-            "USER_SCRIPTS_BUCKET_NAME":  scripts_s3_bucket.bucket_name,
-            "INTEGRITY_CHECK_DATA_S3_URI": config["compute"]["batchjob"]["env"].get("INTEGRITY_CHECK_DATA_S3_URI"),
-            "INTEGRITY_CHECK_DATA_LOCAL_PATH": config["compute"]["batchjob"]["env"].get("INTEGRITY_CHECK_DATA_LOCAL_PATH"),
-            "COMPLETE_DATA_S3_URI": config["compute"]["batchjob"]["env"].get("COMPLETE_DATA_S3_URI"),
-            "COMPLETE_DATA_PATH": config["compute"]["batchjob"]["env"].get("COMPLETE_DATA_PATH"),
-            "SHOULD_PERFORM_COMPLETE_TRAINING": config["compute"]["batchjob"]["env"].get("SHOULD_PERFORM_COMPLETE_TRAINING"),
-            "SHOULD_PERFORM_INTEGRITY_CHECK": config["compute"]["batchjob"]["env"].get("SHOULD_PERFORM_INTEGRITY_CHECK"),
+            "USER_SCRIPTS_BUCKET_NAME": scripts_s3_bucket.bucket_name,
             "AWS_DEFAULT_REGION": config["aws_region"],
-              
         }
 
+        # Add dynamic environment variables from the config
+        batchjob_env = config["compute"]["batchjob"]["env"]
+        for key, value in batchjob_env.items():
+            job_definition_container_env_base[key] = value
+            
         job_definition_container_env = job_definition_container_env_base.copy()
         lustre_volumes = None
 
