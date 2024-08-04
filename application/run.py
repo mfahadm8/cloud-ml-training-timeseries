@@ -1,10 +1,10 @@
 import boto3
 import os
-from utils.evalution_criteria import calculate_sharpe_ratio,check_required_columns
+from utils.evalution_criteria import calculate_sharpe_ratio,check_required_columns,compare_columns
 from utils.runtime_checks import run_script
 from utils.static_checks import perform_static_checks
 from utils.replace_func import update_script_with_template_functions,replace_main_block
-from utils.boto3_helper import store_sharpe_ratio_in_dynamodb,send_failure_email,upload_script_to_s3,download_from_s3,upload_weights_to_s3
+from utils.boto3_helper import store_sharpe_ratio_in_dynamodb,send_failure_email,upload_script_to_s3,download_from_s3,upload_weights_to_s3,update_submissions_dynamodb
 import logging
 import re
 
@@ -13,7 +13,7 @@ INTEGRITY_CHECK_DATA_S3_URI = os.environ.get("INTEGRITY_CHECK_DATA_S3_URI","s3:/
 INTEGRITY_CHECK_DATA_LOCAL_PATH = os.environ.get("INTEGRITY_CHECK_DATA_LOCAL_PATH","integrity-check/")
 COMPLETE_DATA_S3_URI = os.environ.get("COMPLETE_DATA_S3_URI","s3://jkpfactors-training-data/complete/2024/")
 COMPLETE_DATA_PATH = os.environ.get("COMPLETE_DATA_PATH","data/")
-SHOULD_PERFORM_COMPLETE_TRAINING = os.environ.get("SHOULD_PERFORM_COMPLETE_TRAINING","False")=="True"
+SHOULD_PERFORM_COMPLETE_TRAINING = os.environ.get("SHOULD_PERFORM_COMPLETE_TRAINING","True")=="True"
 SHOULD_PERFORM_INTEGRITY_CHECK = os.environ.get("SHOULD_PERFORM_INTEGRITY_CHECK","True")=="True"
 AWS_DEFAULT_REGION = os.environ.get("AWS_DEFAULT_REGION","us-east-1")
 RETRAIN = os.environ.get("RETRAIN","False")=="True"
@@ -51,6 +51,8 @@ def perform_integrity_check(script_file, output_file):
         return False, message
 
     is_valid, message = compare_columns(output_file)
+    if not is_valid:
+        return False, message
     # Step 3: Runtime Checks
     template_functions_mapping = {
         'load_data': 'templates/integrity_check/load_func.py',
@@ -96,7 +98,7 @@ def main(user_ml_script_s3_uri, user_ml_output_csv_s3_uri,submission_timestamp,e
         if is_valid:
             upload_script_to_s3(script_file,output_file,USER_SCRIPTS_BUCKET_NAME,email,submission_timestamp)
         else:
-            send_failure_email(email=email,message=message)
+             send_failure_email(email=email,message=message)
 
 
     if is_valid and SHOULD_PERFORM_COMPLETE_TRAINING:

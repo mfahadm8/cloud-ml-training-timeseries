@@ -3,6 +3,7 @@ import os
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 import smtplib
+from datetime import datetime
 import json
 
 def download_from_s3(s3_uri, local_path):
@@ -27,7 +28,7 @@ def download_from_s3(s3_uri, local_path):
                 s3.download_file(bucket, file_key, local_file_path)
 
 
-def upload_script_to_s3(script_file,output_file, bucket_name, email, submission_timestamp,retrain:bool):
+def upload_script_to_s3(script_file,output_file, bucket_name, email, submission_timestamp):
     s3 = boto3.client('s3')
     accepted_script_key = f"unprocessed/accepted/{email}/{submission_timestamp}/{script_file}"
     accepted_output_key = f"unprocessed/accepted/{email}/{submission_timestamp}/{output_file}"
