@@ -55,7 +55,7 @@ class StorageStack(Stack):
         self.ml_batch_jobs_bucket = ml_batch_jobs_bucket
 
         # Containers registry
-        ecr_registry = ecr.Repository(
+        ecr_registry = ecr.Repository.from_repository_name(
             self,
             "ecr",
             repository_name="ml-batch-job-"+config["stage"]

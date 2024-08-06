@@ -1,6 +1,3 @@
-# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-# SPDX-License-Identifier: Apache-2.0
-
 from aws_cdk import Stack
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_iam as iam
@@ -13,7 +10,7 @@ from typing import Dict
 class NetworkStack(Stack):
     vpc = None
 
-    def __init__(self, scope: Construct, construct_id: str,config:Dict, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, config: Dict, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
         
         # Apply common tags to stack resources.
@@ -23,27 +20,38 @@ class NetworkStack(Stack):
         self.vpc = ec2.Vpc(
             self,
             id="vpc",
-            nat_gateways=0,
-            cidr=config["network"]["vpc"]["cidr"],
-            max_azs=99,
+            nat_gateways=1,  # One NAT Gateway for the private subnets
+            ip_addresses=ec2.IpAddresses.cidr(config["network"]["vpc"]["cidr"]),
+            max_azs=3,  # Adjust this to the number of Availability Zones you want to use
             vpc_name="Vpc-"+config["stage"],
             subnet_configuration=[
                 ec2.SubnetConfiguration(
-                    name="private-isolated-subnet",
+                    name="public-subnet",
+                    subnet_type=ec2.SubnetType.PUBLIC,
+                    cidr_mask=24
+                ),
+                ec2.SubnetConfiguration(
+                    name="private-subnet-with-egress",
+                    subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS,
+                    cidr_mask=24
+                ),
+                ec2.SubnetConfiguration(
+                    name="private-subnet-isolated",
                     subnet_type=ec2.SubnetType.PRIVATE_ISOLATED,
+                    cidr_mask=24
                 )
             ],
         )
+        
+        # Select the subnets for VPC endpoint interfaces
         subnet_vpc_endpoint_interface = self.vpc.select_subnets(
-            subnet_type=ec2.SubnetType.PRIVATE_ISOLATED
+            subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
         ).subnets[0]
 
         subnet_selection_interface = ec2.SubnetSelection(
             subnets=[subnet_vpc_endpoint_interface]
         )
-        subnet_selection_gateway = ec2.SubnetSelection(
-            subnet_type=ec2.SubnetType.PRIVATE_ISOLATED,
-        )
+        
         # VPC Flow Logs
         log_group = logs.LogGroup(self, "flow-logs-group")
         flow_log_role = iam.Role(
@@ -55,7 +63,7 @@ class NetworkStack(Stack):
         ec2.FlowLog(
             self,
             "FlowLog",
-            flow_log_name= "FlowLog-"+config["stage"] ,
+            flow_log_name="FlowLog-"+config["stage"],
             resource_type=ec2.FlowLogResourceType.from_vpc(self.vpc),
             destination=ec2.FlowLogDestination.to_cloud_watch_logs(
                 log_group, flow_log_role
@@ -66,7 +74,7 @@ class NetworkStack(Stack):
         self.vpc.add_gateway_endpoint(
             "vpce-s3",
             service=ec2.GatewayVpcEndpointAwsService.S3,
-            subnets=[subnet_selection_gateway],
+            subnets=[ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC)]
         )
         self.vpc.add_interface_endpoint(
             "vpce-ecr",
@@ -133,6 +141,8 @@ class NetworkStack(Stack):
             service=ec2.InterfaceVpcEndpointAwsService.EC2,
             subnets=subnet_selection_interface,
         )
-        self.vpc.add_gateway_endpoint("DynamoDbEndpoint",
-            service=ec2.GatewayVpcEndpointAwsService.DYNAMODB
+        self.vpc.add_gateway_endpoint(
+            "DynamoDbEndpoint",
+            service=ec2.GatewayVpcEndpointAwsService.DYNAMODB,
+            subnets=[ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC)]
         )

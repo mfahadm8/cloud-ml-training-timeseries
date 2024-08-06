@@ -53,7 +53,7 @@ class BatchJobStack(Stack):
         self._region = config["aws_region"]
 
         subnet_selection = ec2.SubnetSelection(
-            subnet_type=ec2.SubnetType.PRIVATE_ISOLATED
+            subnet_type=ec2.SubnetType.PUBLIC
         )
 
         # Security Group
