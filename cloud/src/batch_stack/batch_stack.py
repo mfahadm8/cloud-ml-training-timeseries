@@ -7,7 +7,6 @@ from aws_cdk import aws_batch as batch
 from aws_cdk import aws_ec2 as ec2
 from aws_cdk import aws_ecr as ecr
 from aws_cdk import aws_ecs as ecs
-from aws_cdk import aws_fsx as fsx
 from aws_cdk import aws_iam as iam
 from aws_cdk import aws_s3 as s3
 from constructs import Construct
@@ -68,7 +67,6 @@ class BatchJobStack(Stack):
         batch_instance_role = iam.Role(
             self,
             "batch-job-instance-role",
-            # role_name="batch-mltraining-instance-role",
             description="AWS Batch for ML Training : IAM Instance Role used by Instance Profile in AWS Batch Compute Environment",
             assumed_by=iam.CompositePrincipal(
                 iam.ServicePrincipal("ec2.amazonaws.com"),
@@ -93,7 +91,6 @@ class BatchJobStack(Stack):
         batch_job_role = iam.Role(
             self,
             "batch-job-role",
-            # role_name="batch-mltraining-job-role",
             description="AWS Batch for ML Training : IAM Role for Batch Container Job Definition",
             assumed_by=iam.CompositePrincipal(
                 iam.ServicePrincipal("ecs.amazonaws.com"),
@@ -124,10 +121,8 @@ class BatchJobStack(Stack):
                                 "kms:Decrypt",
                             ],
                             resources=[
-                                f"arn:aws:ssm:{self._region}:{self._account}"
-                                f":parameter/batch-mltraining/*",
-                                f"arn:aws:ssm:{self._region}:{self._account}"
-                                f":parameter/batch-mltraining",
+                                f"arn:aws:ssm:{self._region}:{self._account}:parameter/batch-mltraining/*",
+                                f"arn:aws:ssm:{self._region}:{self._account}:parameter/batch-mltraining",
                             ],
                         )
                     ]
@@ -142,7 +137,6 @@ class BatchJobStack(Stack):
         batch_execution_role = iam.Role(
             self,
             "batch-mltraining-job-execution-role",
-            # role_name="batch-mltraining-job-execution-role",
             description="AWS Batch for ML Training : IAMExecution Role for Batch Container Job Definition",
             assumed_by=iam.CompositePrincipal(
                 iam.ServicePrincipal("ecs.amazonaws.com"),
@@ -161,21 +155,17 @@ class BatchJobStack(Stack):
             ],
         )
 
-        # TODO Update to Amazon Linux 2023 when AL 2023 GPU will be available : https://github.com/amazonlinux/amazon-linux-2023/issues/12
         ecs_nvidia_ami = ec2.MachineImage.from_ssm_parameter(
             "/aws/service/ecs/optimized-ami/amazon-linux-2/gpu/recommended/image_id"
         )
-        # AWS Batch > Compute Environment : Instance classes
 
-        # nvidia
         batch_compute_instance_classes_nvidia = [ec2.InstanceClass.G4DN]
         if self._region not in ["eu-west-3"]:
             instances_classes_not_available = [ec2.InstanceClass.G5]
-            # Concatenate all sequences
-            batch_compute_instance_classes_nvidia = [
-                *batch_compute_instance_classes_nvidia,
-                *instances_classes_not_available,
-            ]
+            batch_compute_instance_classes_nvidia = concatenate_seq([
+                batch_compute_instance_classes_nvidia,
+                instances_classes_not_available,
+            ])
 
         mltraining_python_script_command = [
             "python",
@@ -203,8 +193,6 @@ class BatchJobStack(Stack):
             "submission_timestamp": "null",
         }
 
-
-        # AWS Batch : Job Definition > Container
         job_definition_container_env_base = {
             "AWS_XRAY_SDK_ENABLED": "true",
             "S3_BUCKET": ml_batch_jobs_bucket.bucket_name,
@@ -212,11 +200,10 @@ class BatchJobStack(Stack):
             "AWS_DEFAULT_REGION": config["aws_region"],
         }
 
-        # Add dynamic environment variables from the config
         batchjob_env = config["compute"]["batchjob"]["env"]
         for key, value in batchjob_env.items():
             job_definition_container_env_base[key] = value
-            
+
         job_definition_container_env = job_definition_container_env_base.copy()
         lustre_volumes = None
 
@@ -230,11 +217,11 @@ class BatchJobStack(Stack):
             execution_role=batch_execution_role,
             job_role=batch_job_role,
             gpu=1,
-            cpu=4,  # Updated to minimum 4 vCPUs
+            cpu=4,
             memory=cdk.Size.mebibytes(8192),
             volumes=lustre_volumes,
         )
-        # AWS Batch > Job definition, Queue, Compute Environment
+
         self.mltraining_nvidia_job = MlTrainingBatchJob(
             self,
             construct_id="nvidia-job",

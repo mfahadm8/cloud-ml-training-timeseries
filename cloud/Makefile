@@ -42,7 +42,7 @@ synth:
 
 deploy: synth
 	echo $(STACK)-$(STAGE)
-	@cdk deploy --app=cdk.out/$(STAGE) $(STACK)-$(STAGE) 
+	@cdk deploy --app=cdk.out/$(STAGE) $(STACK)-$(STAGE)
 
 diff:
 	@cdk diff -c stage=$(STAGE) $(STACK)-$(STAGE)

@@ -111,7 +111,7 @@ class MlTrainingBatchJob(Construct):
                             )
                         )
                     ],
-                key_pair=ec2.KeyPair.from_key_pair_name(self,"jkpfactors-keypair","jkpfactors-dev.pem")
+                key_pair=ec2.KeyPair.from_key_pair_name(self,"jkpfactors-keypair","jkpfactors-dev")
             
             )
             compute_environment = batch.ManagedEc2EcsComputeEnvironment(
