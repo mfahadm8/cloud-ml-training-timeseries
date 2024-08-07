@@ -84,25 +84,23 @@ def get_ssm_parameter(name):
     return response['Parameter']['Value']
 
 def send_failure_email(email, message):
-    # get SES SMTP email credentials from SSM Parameter Store
-    smtp_username = get_ssm_parameter('SMTP_USER')
-    smtp_password = get_ssm_parameter('SMTP_PASSWORD')
-    smtp_host = get_ssm_parameter('SMTP_ENDPOINT')
-    smtp_port = get_ssm_parameter('SMTP_PORT')
-
-    # create email
-    msg = MIMEMultipart()
-    msg['From'] = "no-reply@jkpfactors.com"
-    msg['To'] = email
-    msg['Subject'] = "Script Integrity Check Failed"
-    msg.attach(MIMEText(message, 'plain'))
-
-    # send email
-    server = smtplib.SMTP(smtp_host, smtp_port)
-    server.starttls()
-    server.login(smtp_username, smtp_password)
-    server.sendmail(msg['From'], msg['To'], msg.as_string())
-    server.quit()
+    ses = boto3.client('ses')
+    ses.send_email(
+        Source='no-reply@jkpfactors.com',
+        Destination={
+            'ToAddresses': [email],
+        },
+        Message={
+            'Subject': {
+                'Data': 'Script Integrity Check Failed',
+            },
+            'Body': {
+                'Text': {
+                    'Data': message,
+                },
+            },
+        }
+    )
 
 def store_sharpe_ratio_in_dynamodb(sharpe_ratio, submission_timestamp, email, user_name, model_name):
     dynamodb = boto3.client('dynamodb',region_name=AWS_DEFAULT_REGION)
